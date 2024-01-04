@@ -11,7 +11,7 @@ license = "AGPL-3.0-only"
 readme = "README.md"
 repository = "https://github.com/kolektiv/midi-2"
 rust-version = "1.64.0"
-version = "0.0.0"
+version = "0.0.1-alpha.0"
 
 [workspace.dependencies]
 
