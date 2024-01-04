@@ -1,0 +1,34 @@
+[workspace]
+resolver = "2"
+members = ["lib/*"]
+
+[workspace.package]
+authors = ["Andrew Cherry (kolektiv)"]
+categories = ["data-structures", "encoding", "multimedia", "multimedia::audio"]
+edition = "2021"
+keywords = ["midi", "protocol", "ump"]
+license = "AGPL-3.0-only"
+readme = "README.md"
+repository = "https://github.com/kolektiv/midi-2"
+rust-version = "1.64.0"
+version = "0.0.0"
+
+[workspace.dependencies]
+
+[workspace.lints.clippy]
+cargo = "warn"
+complexity = "warn"
+correctness = "deny"
+pedantic = "warn"
+perf = "warn"
+restriction = "allow"
+style = "warn"
+suspicious = "warn"
+
+[workspace.lints.rust]
+future_incompatible = "warn"
+nonstandard_style = "warn"
+rust_2018_idioms = "warn"
+rust_2018_compatibility = "warn"
+rust_2021_compatibility = "warn"
+unused = "warn"

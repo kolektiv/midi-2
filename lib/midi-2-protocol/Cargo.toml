@@ -1,0 +1,17 @@
+[package]
+authors.workspace = true
+categories.workspace = true
+description = "MIDI 2[.x] Protocol Implementation (including UMP for 2[.x])"
+edition.workspace = true
+keywords.workspace = true
+license.workspace = true
+name = "midi-2-protocol"
+readme.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true
