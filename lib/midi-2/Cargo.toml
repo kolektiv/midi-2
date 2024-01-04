@@ -12,6 +12,8 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
+midi-2-ci = { path = "../midi-2-ci" }
+midi-2-protocol = { path = "../midi-2-protocol" }
 
 [lints]
 workspace = true

@@ -14,6 +14,11 @@ rust-version = "1.64.0"
 version = "0.0.1-alpha.0"
 
 [workspace.dependencies]
+arbitrary-int = "1"
+bitvec = "1"
+funty = "2"
+num_enum = "0.7"
+thiserror = "1"
 
 [workspace.lints.clippy]
 cargo = "warn"
