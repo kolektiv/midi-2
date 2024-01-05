@@ -36,7 +36,7 @@ use crate::message::{
 /// not usually required as it will generally be set on initialization of a
 /// packet.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// # use midi_2_protocol::message::Error;

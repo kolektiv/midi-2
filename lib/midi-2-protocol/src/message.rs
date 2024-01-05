@@ -74,7 +74,7 @@ use thiserror::Error;
 /// Reading the Message Type directly is also likely to be rare, as using
 /// provided pattern matching functions is likely to be more ergonomic.
 ///
-/// # Example
+/// # Examples
 ///
 /// ```rust
 /// # use midi_2_protocol::message::*;
@@ -114,7 +114,7 @@ impl_arbitrary_value!(
     /// Messages which contain a Group field provide `group(...)` and
     /// `set_group(...)` functions to read and write the Group value.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// # use midi_2_protocol::message::*;
@@ -326,7 +326,7 @@ macro_rules! impl_message_packet {
         ::paste::paste! {
             impl<'a> $message<'a> {
                 #[doc = "Returns an appropriately sized `u32` array for a. " $message " message."]
-                #[doc = "# Example"]
+                #[doc = "# Examples"]
                 #[doc = "```rust"]
                 #[doc = concat!("# use ", std::module_path!(), "::")]
                 #[doc = "# " $message ";"]

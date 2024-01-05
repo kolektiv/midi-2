@@ -33,7 +33,7 @@ system::impl_message!(
     /// The Timing Clock message **([M2-104-UM 7.6] and [MA01])** is a System
     /// Real Time message sent using a 32-bit UMP **([M2-104-UM])**.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// # use midi_2_protocol::message::*;
@@ -66,7 +66,7 @@ system::impl_message!(
     /// The Start message **([M2-104-UM 7.6] and [MA01])** is a System
     /// Real Time message sent using a 32-bit UMP **([M2-104-UM])**.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// # use midi_2_protocol::message::*;
@@ -99,7 +99,7 @@ system::impl_message!(
     /// The Continue message **([M2-104-UM 7.6] and [MA01])** is a System
     /// Real Time message sent using a 32-bit UMP **([M2-104-UM])**.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// # use midi_2_protocol::message::*;
@@ -132,7 +132,7 @@ system::impl_message!(
     /// The Stop message **([M2-104-UM 7.6] and [MA01])** is a System
     /// Real Time message sent using a 32-bit UMP **([M2-104-UM])**.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// # use midi_2_protocol::message::*;
@@ -165,7 +165,7 @@ system::impl_message!(
     /// The Active Sensing message **([M2-104-UM 7.6] and [MA01])** is a System
     /// Real Time message sent using a 32-bit UMP **([M2-104-UM])**.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// # use midi_2_protocol::message::*;
@@ -198,7 +198,7 @@ system::impl_message!(
     /// The Reset message **([M2-104-UM 7.6] and [MA01])** is a System
     /// Real Time message sent using a 32-bit UMP **([M2-104-UM])**.
     ///
-    /// # Example
+    /// # Examples
     ///
     /// ```rust
     /// # use midi_2_protocol::message::*;
