@@ -18,6 +18,7 @@ arbitrary-int = "1"
 bitvec = "1"
 funty = "2"
 num_enum = "0.7"
+paste = "1"
 thiserror = "1"
 
 [workspace.lints.clippy]

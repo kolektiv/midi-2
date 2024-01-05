@@ -159,8 +159,10 @@ where
 pub enum Error {
     #[error("Conversion: Attempted to convert from {0}, not a valid variant.")]
     Conversion(u8),
-    #[error("Overflow: Attempted to store value {0} in a {1}bit type.")]
+    #[error("Overflow: Attempted to store value {0} in a {1} bit type.")]
     Overflow(u64, u8),
+    #[error("Size: Expected a packet of {0} bits, but found {1} bits.")]
+    Size(u8, u8),
 }
 
 impl Error {
@@ -171,10 +173,127 @@ impl Error {
     pub(crate) fn overflow<V>(value: impl Into<u64>, size: u8) -> Self {
         Self::Overflow(value.into(), size)
     }
+
+    pub(crate) fn size(expected: u8, actual: u8) -> Self {
+        Self::Size(expected, actual)
+    }
 }
 
 // -----------------------------------------------------------------------------
 // Macros
+// -----------------------------------------------------------------------------
+
+// Message
+
+macro_rules! impl_message {
+    (
+        $(#[$meta:meta])*
+        $message:ident { $size:literal, [
+            $({ $value_name:ident, $value_type:ty },)*
+        ] }
+    ) => {
+        $crate::message::impl_message_type!(
+            $(#[$meta])*
+            $message
+        );
+
+        $crate::message::impl_message_constructors!($message { $size });
+        $crate::message::impl_message_packet!($message { $size });
+        $crate::message::impl_message_trait_bits!($message);
+        $crate::message::impl_message_trait_debug!($message {[ $({ $value_name, $value_type },)* ]});
+        $crate::message::impl_message_values!($message {[ $({ $value_name, $value_type },)* ]});
+    };
+}
+
+macro_rules! impl_message_type {
+    (
+        $(#[$meta:meta])*
+        $message:ident
+    ) => {
+        $(#[$meta])*
+        pub struct $message<'a> {
+            bits: &'a mut BitSlice<u32, Msb0>,
+        }
+    };
+}
+
+macro_rules! impl_message_constructors {
+    ($message:ident { $size:literal }) => {
+        impl<'a> $message<'a> {
+            pub(crate) fn try_new(packet: &'a mut [u32]) -> Result<Self, Error> {
+                let bits = packet.view_bits_mut();
+
+                match bits.len() {
+                    len if len == $size * 32 => Ok(Self { bits }),
+                    len => Err(Error::size($size * 32, len.try_into().unwrap())),
+                }
+            }
+        }
+    };
+}
+
+macro_rules! impl_message_packet {
+    ($message:ident { $size:literal }) => {
+        impl<'a> $message<'a> {
+            pub fn packet() -> [u32; $size] {
+                [0u32; $size]
+            }
+        }
+    };
+}
+
+macro_rules! impl_message_values {
+    ($message:ident { [$({ $value_name:ident, $value_type:ty },)*] }) => {
+        impl<'a> $message<'a> {
+            $(
+                pub fn $value_name(&self) -> Result<$value_type, Error> {
+                    self.get_value::<$value_type>()
+                }
+
+                ::paste::paste! {
+                    pub fn [<set_ $value_name>](self, $value_name: $value_type) -> Self {
+                        self.set_value::<$value_type>($value_name)
+                    }
+                }
+            )*
+        }
+    };
+}
+
+macro_rules! impl_message_trait_bits {
+    ($message:ident) => {
+        impl<'a> Bits for $message<'a> {
+            fn read(&self) -> &BitSlice<u32, Msb0> {
+                &self.bits
+            }
+
+            fn write(&mut self) -> &mut BitSlice<u32, Msb0> {
+                &mut self.bits
+            }
+        }
+    };
+}
+
+macro_rules! impl_message_trait_debug {
+    ($message:ident { [$({ $value_name:ident, $value_type:ty },)*] }) => {
+        impl<'a> ::core::fmt::Debug for $message<'a> {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+                f.debug_struct(stringify!($message))
+                  $(.field(stringify!($value_name), &self.$value_name().unwrap()))*
+                    .finish()
+            }
+        }
+    };
+}
+
+pub(crate) use impl_message;
+pub(crate) use impl_message_constructors;
+pub(crate) use impl_message_packet;
+pub(crate) use impl_message_trait_bits;
+pub(crate) use impl_message_trait_debug;
+pub(crate) use impl_message_type;
+pub(crate) use impl_message_values;
+
 // -----------------------------------------------------------------------------
 
 // Value
@@ -210,12 +329,22 @@ macro_rules! impl_value_type {
 macro_rules! impl_value_constructors {
     ($value:ident { $integral:ty, $size:literal }) => {
         impl $value {
-            pub const fn new(value: $integral) -> Self {
-                Self(UInt::<$integral, $size>::new(value))
-            }
+            ::paste::paste! {
+                #[doc = "Creates a new `" $value "` type from the given `" $integral "`."]
+                #[doc = "The `" $value "` type is restricted to " $size " bits."]
+                #[doc = "The `new` function will panic if called with a value which is larger than the type can contain."]
+                #[doc = "Generally, `new` should only be used where the value is known to be valid."]
+                #[doc = "The `new` function is also `const`."]
+                pub const fn new(value: $integral) -> Self {
+                    Self(UInt::<$integral, $size>::new(value))
+                }
 
-            pub fn try_new(value: $integral) -> Result<Self, Error> {
-                Ok(Self::try_from(value)?)
+                #[doc = "Creates a new `" $value "` from the given `" $integral "`."]
+                #[doc = "The `" $value "` value is restricted to " $size " bits."]
+                #[doc = "If called with a value larger than the type will contain, `try_new` will return an error."]
+                pub fn try_new(value: $integral) -> Result<Self, Error> {
+                    Ok(Self::try_from(value)?)
+                }
             }
         }
     };
