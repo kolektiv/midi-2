@@ -1,12 +1,19 @@
+// =============================================================================
+// System
+// =============================================================================
+
+//! System (Common and Real Time) message and value types.
+//!
 //! The [`system`](crate::message::system) module contains modules for both
 //! System Common ([`common`](crate::message::system::common)) and System Real
-//! Time ([`real_time`](crate::message::system::real_time)) messages, as defined
-//! by **([M2-104-UM 7.6])**.
+//! Time ([`real_time`](crate::message::system::real_time)) messages and values,
+//! as defined by **([M2-104-UM 7.6])**.
+//!
+//! Additionally, common value types and a unifying enumeration type combining
+//! Common and Real Time messages are provided.
 
 pub mod common;
 pub mod real_time;
-
-use arbitrary_int::UInt;
 
 use crate::message::{
     self,
@@ -15,38 +22,51 @@ use crate::message::{
     Value,
 };
 
-// =============================================================================
-// System
-// =============================================================================
-
 // -----------------------------------------------------------------------------
 // Values
 // -----------------------------------------------------------------------------
 
 // Universal
 
-message::impl_value!(
-    /// # Status
-    ///
-    /// The Status value type accesses the 8 status bits of a System message
-    /// **([M2-104-UM 7.6])**. Messages which contain the status type will have
-    /// functions for getting and setting the status value, although this is
-    /// not usually required as it will generally be set on initialization of a
-    /// packet.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use midi_2_protocol::message::system::*;
-    /// # use midi_2_protocol::message::system::real_time::*;
-    /// #
-    /// let mut packet = TimingClock::packet();
-    /// let mut timing_clock = TimingClock::try_init(&mut packet).unwrap();
-    ///
-    /// assert_eq!(timing_clock.status().unwrap(), Status::new(0xf8));
-    /// ```
-    Status { u8, 8, 8..=15 }
-);
+/// Status field value type.
+///
+/// The `Status` value type accesses the 8-bit Status field of a `System`
+/// message **([M2-104-UM 7.6])**. Messages which contain the `Status` type will
+/// have functions for getting and setting the Status value, although this is
+/// not usually required as it will generally be set on initialization of a
+/// packet.
+///
+/// # Example
+///
+/// ```rust
+/// # use midi_2_protocol::message::Error;
+/// # use midi_2_protocol::message::system::Status;
+/// # use midi_2_protocol::message::system::real_time::TimingClock;
+/// #
+/// let mut packet = TimingClock::packet();
+/// let mut timing_clock = TimingClock::try_init(&mut packet)?;
+///
+/// assert_eq!(timing_clock.status()?, Status::TimingClock);
+/// #
+/// # Ok::<(), Error>(())
+/// ```
+#[derive(Debug, Eq, IntoPrimitive, PartialEq, TryFromPrimitive)]
+#[num_enum(error_type(name = Error, constructor = Error::conversion))]
+#[repr(u8)]
+pub enum Status {
+    MIDITimeCode = 0xf1,
+    SongPositionPointer = 0xf2,
+    SongSelect = 0xf3,
+    TuneRequest = 0xf6,
+    TimingClock = 0xf8,
+    Start = 0xfa,
+    Continue = 0xfb,
+    Stop = 0xfc,
+    ActiveSensing = 0xfe,
+    Reset = 0xff,
+}
+
+message::impl_value_trait_value!(Status { u8, 8..=15 });
 
 // -----------------------------------------------------------------------------
 // Macros
@@ -57,7 +77,7 @@ message::impl_value!(
 macro_rules! impl_message {
     (
         $(#[$meta:meta])*
-        $message:ident { $status:tt, [
+        $message:ident { $status:expr, [
             $({ $value_name:ident, $value_type:ty },)*
         ] }
     ) => {
@@ -72,7 +92,7 @@ macro_rules! impl_message {
             );
 
             impl<'a> $message<'a> {
-                pub(super) const STATUS: Status = Status::new($status);
+                pub(super) const STATUS: Status = $status;
 
                 fn try_init_internal(packet: &'a mut [u32]) -> Result<Self, Error> {
                     Ok(Self::try_new(packet)?
@@ -96,3 +116,7 @@ macro_rules! impl_message_try_init {
 
 pub(crate) use impl_message;
 pub(crate) use impl_message_try_init;
+use num_enum::{
+    IntoPrimitive,
+    TryFromPrimitive,
+};
