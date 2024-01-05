@@ -7,7 +7,11 @@
 //! The message types, and associated value types implemented as part of
 //! [`message`](crate::message) implement a typed approach to working with UMP
 //! Format messages (as Universal MIDI Packets -- variable-length arrays of N *
-//! 32-bits).
+//! 32-bits). See the specification ([M2-104-UMP][1]) for the full details of
+//! the UMP Format and the MIDI 2.x Protocol.
+//!
+//! (Note that references are made to the specification throughout, including
+//! relevant section numbers where appropriate).
 //!
 //! This is only implemented for the MIDI 2.x Protocol -- support for the legacy
 //! MIDI 1.0 message types within UMP is not provided, so MIDI 1.0 Channel Voice
@@ -35,6 +39,8 @@
 //! message type (this may fail if given a packet of incorrect size). This will
 //! initialize the packet to contain the supplied message data, and return a
 //! type which can further modify the packet as needed.
+//!
+//! [1]: https://midi.org/specifications/universal-midi-packet-ump-and-midi-2-0-protocol-specification/download
 
 pub mod system;
 pub mod voice;
@@ -259,7 +265,7 @@ impl Error {
         Self::Conversion(value)
     }
 
-    pub(crate) fn overflow<V>(value: impl Into<u64>, size: u8) -> Self {
+    pub(crate) fn overflow(value: impl Into<u64>, size: u8) -> Self {
         Self::Overflow(value.into(), size)
     }
 
@@ -337,6 +343,7 @@ macro_rules! impl_message_packet {
                 #[doc = ""]
                 #[doc = "// let message = " $message "::try_init(&mut packet, ...) ..."]
                 #[doc = "```"]
+                #[must_use]
                 pub fn packet() -> [u32; $size] {
                     [0u32; $size]
                 }
@@ -354,6 +361,7 @@ macro_rules! impl_message_values {
                 }
 
                 ::paste::paste! {
+                    #[must_use]
                     pub fn [<set_ $value_name>](self, $value_name: $value_type) -> Self {
                         self.set_value::<$value_type>($value_name)
                     }
@@ -399,99 +407,6 @@ pub(crate) use impl_message_values;
 
 // -----------------------------------------------------------------------------
 
-// Value
-
-macro_rules! impl_value {
-    (
-        $(#[$meta:meta])*
-        $value:ident { $integral:ty, $range:expr }
-    ) => {
-        $crate::message::impl_value_type!(
-            $(#[$meta])*
-            $value { $integral }
-        );
-
-        $crate::message::impl_value_constructors!($value { $integral });
-        $crate::message::impl_value_trait_from!($value { $integral });
-        $crate::message::impl_value_trait_try_from!($value { $integral });
-        $crate::message::impl_value_trait_value!($value { $integral, $range });
-    };
-}
-
-macro_rules! impl_value_type {
-    (
-        $(#[$meta:meta])*
-        $value:ident { $integral:ty }
-    ) => {
-        $(#[$meta])*
-        #[derive(Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
-        pub struct $value($integral);
-    };
-}
-
-macro_rules! impl_value_constructors {
-    ($value:ident { $integral:ty }) => {
-        impl $value {
-            ::paste::paste! {
-                pub const fn new(value: $integral) -> Self {
-                    Self(value)
-                }
-            }
-        }
-    };
-}
-
-macro_rules! impl_value_trait_from {
-    ($value:ident { $integral:ty }) => {
-        impl From<$value> for $integral {
-            fn from(value: $value) -> Self {
-                value.0
-            }
-        }
-    };
-}
-
-macro_rules! impl_value_trait_try_from {
-    ($value:ident { $integral:ty }) => {
-        impl TryFrom<$integral> for $value {
-            type Error = Error;
-
-            fn try_from(value: $integral) -> Result<Self, Self::Error> {
-                Ok($value(value))
-            }
-        }
-    };
-}
-
-macro_rules! impl_value_trait_value {
-    ($value:ident { $integral:ty, $range:expr }) => {
-        impl Value for $value {
-            fn try_read<I>(integrals: &I) -> Result<Self, Error>
-            where
-                I: Integrals,
-            {
-                Self::try_from(integrals.get_integral::<$integral>($range))
-            }
-
-            fn write<I>(self, integrals: I) -> I
-            where
-                I: Integrals,
-            {
-                integrals.set_integral::<$integral>($range, <$integral>::from(self))
-            }
-        }
-    };
-}
-
-pub(crate) use impl_value;
-pub(crate) use impl_value_constructors;
-pub(crate) use impl_value_trait_from;
-pub(crate) use impl_value_trait_try_from;
-pub(crate) use impl_value_trait_value;
-pub(crate) use impl_value_type;
-
-// -----------------------------------------------------------------------------
-
 // Value (Arbitrary)
 
 macro_rules! impl_arbitrary_value {
@@ -526,12 +441,13 @@ macro_rules! impl_arbitrary_value_constructors {
     ($value:ident { $integral:ty, $size:literal }) => {
         impl $value {
             ::paste::paste! {
+                #[must_use]
                 pub const fn new(value: $integral) -> Self {
                     Self(UInt::<$integral, $size>::new(value))
                 }
 
                 pub fn try_new(value: $integral) -> Result<Self, Error> {
-                    Ok(Self::try_from(value)?)
+                    Self::try_from(value)
                 }
             }
         }
@@ -555,7 +471,7 @@ macro_rules! impl_arbitrary_value_trait_try_from {
 
             fn try_from(value: $integral) -> Result<Self, Self::Error> {
                 UInt::<$integral, $size>::try_new(value)
-                    .map_err(|_| Error::overflow::<$integral>(value, $size))
+                    .map_err(|_| Error::overflow(value, $size))
                     .map($value)
             }
         }
@@ -588,3 +504,97 @@ pub(crate) use impl_arbitrary_value_trait_from;
 pub(crate) use impl_arbitrary_value_trait_try_from;
 pub(crate) use impl_arbitrary_value_trait_value;
 pub(crate) use impl_arbitrary_value_type;
+
+// -----------------------------------------------------------------------------
+
+// Value (Primitive)
+
+macro_rules! impl_primitive_value {
+    (
+        $(#[$meta:meta])*
+        $value:ident { $integral:ty, $range:expr }
+    ) => {
+        $crate::message::impl_primitive_value_type!(
+            $(#[$meta])*
+            $value { $integral }
+        );
+
+        $crate::message::impl_primitive_value_constructors!($value { $integral });
+        $crate::message::impl_primitive_value_trait_from!($value { $integral });
+        $crate::message::impl_primitive_value_trait_try_from!($value { $integral });
+        $crate::message::impl_primitive_value_trait_value!($value { $integral, $range });
+    };
+}
+
+macro_rules! impl_primitive_value_type {
+    (
+        $(#[$meta:meta])*
+        $value:ident { $integral:ty }
+    ) => {
+        $(#[$meta])*
+        #[derive(Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
+        pub struct $value($integral);
+    };
+}
+
+macro_rules! impl_primitive_value_constructors {
+    ($value:ident { $integral:ty }) => {
+        impl $value {
+            ::paste::paste! {
+                #[must_use]
+                pub const fn new(value: $integral) -> Self {
+                    Self(value)
+                }
+            }
+        }
+    };
+}
+
+macro_rules! impl_primitive_value_trait_from {
+    ($value:ident { $integral:ty }) => {
+        impl From<$value> for $integral {
+            fn from(value: $value) -> Self {
+                value.0
+            }
+        }
+    };
+}
+
+macro_rules! impl_primitive_value_trait_try_from {
+    ($value:ident { $integral:ty }) => {
+        impl TryFrom<$integral> for $value {
+            type Error = Error;
+
+            fn try_from(value: $integral) -> Result<Self, Self::Error> {
+                Ok($value(value))
+            }
+        }
+    };
+}
+
+macro_rules! impl_primitive_value_trait_value {
+    ($value:ident { $integral:ty, $range:expr }) => {
+        impl Value for $value {
+            fn try_read<I>(integrals: &I) -> Result<Self, Error>
+            where
+                I: Integrals,
+            {
+                Self::try_from(integrals.get_integral::<$integral>($range))
+            }
+
+            fn write<I>(self, integrals: I) -> I
+            where
+                I: Integrals,
+            {
+                integrals.set_integral::<$integral>($range, <$integral>::from(self))
+            }
+        }
+    };
+}
+
+pub(crate) use impl_primitive_value;
+pub(crate) use impl_primitive_value_constructors;
+pub(crate) use impl_primitive_value_trait_from;
+pub(crate) use impl_primitive_value_trait_try_from;
+pub(crate) use impl_primitive_value_trait_value;
+pub(crate) use impl_primitive_value_type;
