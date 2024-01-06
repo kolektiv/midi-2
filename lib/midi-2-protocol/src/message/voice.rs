@@ -43,21 +43,21 @@ pub enum Opcode {
     NoteOn = 0b1001,
 }
 
-message::impl_value_trait_value!(Opcode { u8, 8..=11 });
+message::impl_value_trait_value!(Opcode, u8, 8..=11);
 
 // -----------------------------------------------------------------------------
 
 // Channel
 
-message::impl_value!(pub Channel { u8, 4, 12..=15});
+message::impl_value!(pub Channel { u8, 12..=15, 4 });
 
 // -----------------------------------------------------------------------------
 
 // Other
 
 message::impl_value!(pub Data {u32, 32..=63 });
-message::impl_value!(pub Index { u8, 7, 24..=31 });
-message::impl_value!(pub Note { u8, 7, 16..=23 });
+message::impl_value!(pub Index { u8, 24..=31, 7 });
+message::impl_value!(pub Note { u8, 16..=23, 7 });
 message::impl_value!(pub Velocity { u16, 32..=47 });
 
 // -----------------------------------------------------------------------------

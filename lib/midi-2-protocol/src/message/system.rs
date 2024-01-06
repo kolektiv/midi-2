@@ -68,7 +68,7 @@ pub enum Status {
     Reset = 0xff,
 }
 
-message::impl_value_trait_value!(Status { u8, 8..=15 });
+message::impl_value_trait_value!(Status, u8, 8..=15);
 
 // -----------------------------------------------------------------------------
 // Macros

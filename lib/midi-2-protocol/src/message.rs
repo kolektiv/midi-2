@@ -106,7 +106,7 @@ pub enum MessageType {
     Stream = 0xf,
 }
 
-impl_value_trait_value!(MessageType { u8, 0..=3 });
+impl_value_trait_value!(MessageType, u8, 0..=3);
 
 // -----------------------------------------------------------------------------
 
@@ -139,7 +139,7 @@ impl_value!(
     /// #
     /// # Ok::<(), Error>(())
     /// ```
-    pub Group { u8, 4, 4..=7 }
+    pub Group { u8, 4..=7, 4 }
 );
 
 // -----------------------------------------------------------------------------
@@ -415,48 +415,19 @@ pub(crate) use impl_message_values;
 // Value
 
 macro_rules! impl_value {
-    // Arbitrary
     (
         $(#[$meta:meta])*
-        $vis:vis $value:ident { $integral:ty, $size:literal, $range:expr }
+        $vis:vis $value:ident { $integral:ty, $range:expr $(, $size:literal)? }
     ) => {
-        $crate::message::impl_value_type!(
-            $(#[$meta])*
-            $vis $value { $integral, $size }
-        );
-
-        $crate::message::impl_value_constructors!($value { $integral, $size });
-        $crate::message::impl_value_trait_from!($value { $integral, $size });
-        $crate::message::impl_value_trait_try_from!($value { $integral, $size });
-        $crate::message::impl_value_trait_value!($value { $integral, $range });
-    };
-    // Primitive
-    (
-        $(#[$meta:meta])*
-        $vis:vis $value:ident { $integral:ty, $range:expr }
-    ) => {
-        $crate::message::impl_value_type!(
-            $(#[$meta])*
-            $vis $value { $integral }
-        );
-
-        $crate::message::impl_value_constructors!($value { $integral });
-        $crate::message::impl_value_trait_from!($value { $integral });
-        $crate::message::impl_value_trait_try_from!($value { $integral });
-        $crate::message::impl_value_trait_value!($value { $integral, $range });
+        $crate::message::impl_value_type!($($meta)*, $vis, $value, $integral $(, $size)?);
+        $crate::message::impl_value_constructor!($value, $integral $(, $size)?);
+        $crate::message::impl_value_trait_from!($value, $integral $(, $size)?);
+        $crate::message::impl_value_trait_try_from!($value, $integral $(, $size)?);
+        $crate::message::impl_value_trait_value!($value, $integral, $range);
     };
 }
 
 macro_rules! impl_value_type {
-    (
-        $(#[$meta:meta])*
-        $vis:vis $value:ident { $integral:ty $(, $size:literal)? }
-    ) => {
-        crate::message::impl_value_type_struct!($($meta)*, $vis, $value, $integral $(, $size)?);
-    };
-}
-
-macro_rules! impl_value_type_struct {
     ($($meta:meta)*, $vis:vis, $value:ident, $integral:ty, $size:literal) => {
         $(#[$meta])*
         #[derive(Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
@@ -469,37 +440,39 @@ macro_rules! impl_value_type_struct {
     };
 }
 
-macro_rules! impl_value_constructors {
-    // Arbitrary
-    ($value:ident { $integral:ty, $size:literal }) => {
+macro_rules! impl_value_constructor {
+    ($value:ident, $integral:ty $(, $size:literal)?) => {
         impl $value {
-            ::paste::paste! {
-                #[must_use]
-                pub const fn new(value: $integral) -> Self {
-                    Self(UInt::<$integral, $size>::new(value))
-                }
+            crate::message::impl_value_constructor_fns!($integral $(, $size)?);
+        }
+    };
+}
 
-                pub fn try_new(value: $integral) -> Result<Self, Error> {
-                    Self::try_from(value)
-                }
+macro_rules! impl_value_constructor_fns {
+    ($integral:ty, $size:literal) => {
+        ::paste::paste! {
+            #[must_use]
+            pub const fn new(value: $integral) -> Self {
+                Self(UInt::<$integral, $size>::new(value))
+            }
+
+            pub fn try_new(value: $integral) -> Result<Self, Error> {
+                Self::try_from(value)
             }
         }
     };
-    // Primitive
-    ($value:ident { $integral:ty }) => {
-        impl $value {
-            ::paste::paste! {
-                #[must_use]
-                pub const fn new(value: $integral) -> Self {
-                    Self(value)
-                }
+    ($integral:ty) => {
+        ::paste::paste! {
+            #[must_use]
+            pub const fn new(value: $integral) -> Self {
+                Self(value)
             }
         }
     };
 }
 
 macro_rules! impl_value_trait_from {
-    ($value:ident { $integral:ty $(, $size:literal)? }) => {
+    ($value:ident, $integral:ty $(, $size:literal)?) => {
         impl From<$value> for $integral {
             crate::message::impl_value_trait_from_fns!($value, $integral $(, $size)?);
         }
@@ -520,7 +493,7 @@ macro_rules! impl_value_trait_from_fns {
 }
 
 macro_rules! impl_value_trait_try_from {
-    ($value:ident { $integral:ty $(, $size:literal)? }) => {
+    ($value:ident, $integral:ty $(, $size:literal)?) => {
         impl TryFrom<$integral> for $value {
             type Error = Error;
 
@@ -545,7 +518,7 @@ macro_rules! impl_value_trait_try_from_fns {
 }
 
 macro_rules! impl_value_trait_value {
-    ($value:ident { $integral:ty, $range:expr }) => {
+    ($value:ident, $integral:ty, $range:expr) => {
         impl Value for $value {
             fn try_read<I>(
                 integrals: &I,
@@ -574,11 +547,11 @@ macro_rules! impl_value_trait_value {
 }
 
 pub(crate) use impl_value;
-pub(crate) use impl_value_constructors;
+pub(crate) use impl_value_constructor;
+pub(crate) use impl_value_constructor_fns;
 pub(crate) use impl_value_trait_from;
 pub(crate) use impl_value_trait_from_fns;
 pub(crate) use impl_value_trait_try_from;
 pub(crate) use impl_value_trait_try_from_fns;
 pub(crate) use impl_value_trait_value;
 pub(crate) use impl_value_type;
-pub(crate) use impl_value_type_struct;
