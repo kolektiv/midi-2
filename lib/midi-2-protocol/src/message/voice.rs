@@ -4,6 +4,8 @@
 
 pub mod attribute;
 
+use std::ops::RangeInclusive;
+
 use arbitrary_int::UInt;
 use bitvec::{
     order::Msb0,
@@ -41,22 +43,22 @@ pub enum Opcode {
     NoteOn = 0b1001,
 }
 
-message::impl_arbitrary_value_trait_value!(Opcode { u8, 8..=11 });
+message::impl_value_trait_value!(Opcode { u8, 8..=11 });
 
 // -----------------------------------------------------------------------------
 
 // Channel
 
-message::impl_arbitrary_value!(pub Channel { u8, 4, 12..=15});
+message::impl_value!(pub Channel { u8, 4, 12..=15});
 
 // -----------------------------------------------------------------------------
 
-// Partial
+// Other
 
-message::impl_primitive_value!(pub Data {u32, 32..=63 });
-message::impl_primitive_value!(pub Index { u8, 24..=31 });
-message::impl_arbitrary_value!(pub Note { u8, 7, 16..=23 });
-message::impl_primitive_value!(pub Velocity { u16, 32..=47 });
+message::impl_value!(pub Data {u32, 32..=63 });
+message::impl_value!(pub Index { u8, 7, 24..=31 });
+message::impl_value!(pub Note { u8, 7, 16..=23 });
+message::impl_value!(pub Velocity { u16, 32..=47 });
 
 // -----------------------------------------------------------------------------
 // Messages
@@ -65,8 +67,8 @@ message::impl_primitive_value!(pub Velocity { u16, 32..=47 });
 // Note Off
 
 voice::impl_message!(pub NoteOff { Opcode::NoteOff, [
-    { note, Note },
-    { velocity, Velocity },
+    { note, Note, None },
+    { velocity, Velocity, None },
 ] });
 
 impl<'a> NoteOff<'a> {
@@ -82,8 +84,8 @@ impl<'a> NoteOff<'a> {
 // Note On
 
 voice::impl_message!(pub NoteOn { Opcode::NoteOn, [
-    { note, Note },
-    { velocity, Velocity },
+    { note, Note, None },
+    { velocity, Velocity, None },
 ] });
 
 impl<'a> NoteOn<'a> {
@@ -104,17 +106,17 @@ macro_rules! impl_message {
     (
         $(#[$meta:meta])*
         $vis:vis $message:ident { $opcode:expr, [
-            $({ $value_name:ident, $value_type:ty },)*
+            $({ $value_name:ident, $value_type:ty, $value_range:expr },)*
         ] }
     ) => {
             message::impl_message!(
                 $(#[$meta])*
                 $vis $message { 2, [
-                    { message_type, MessageType },
-                    { group, Group },
-                    { opcode, Opcode },
-                    { channel, Channel },
-                  $({ $value_name, $value_type },)*
+                    { message_type, MessageType, None },
+                    { group, Group, None },
+                    { opcode, Opcode, None },
+                    { channel, Channel, None },
+                  $({ $value_name, $value_type, $value_range },)*
                 ] }
             );
 

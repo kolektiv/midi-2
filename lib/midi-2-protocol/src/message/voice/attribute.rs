@@ -1,3 +1,5 @@
+use std::ops::RangeInclusive;
+
 use crate::message::{
     self,
     Error,
@@ -5,4 +7,4 @@ use crate::message::{
     Value,
 };
 
-message::impl_primitive_value!(pub Manufacturer { u16, 48..=63 });
+message::impl_value!(pub Manufacturer { u16, 48..=63 });

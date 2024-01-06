@@ -15,6 +15,8 @@
 pub mod common;
 pub mod real_time;
 
+use std::ops::RangeInclusive;
+
 use crate::message::{
     self,
     Error,
@@ -66,7 +68,7 @@ pub enum Status {
     Reset = 0xff,
 }
 
-message::impl_primitive_value_trait_value!(Status { u8, 8..=15 });
+message::impl_value_trait_value!(Status { u8, 8..=15 });
 
 // -----------------------------------------------------------------------------
 // Macros
@@ -78,16 +80,16 @@ macro_rules! impl_message {
     (
         $(#[$meta:meta])*
         $vis:vis $message:ident { $status:expr, [
-            $({ $value_name:ident, $value_type:ty },)*
+            $({ $value_name:ident, $value_type:ty, $value_range:expr },)*
         ] }
     ) => {
             message::impl_message!(
                 $(#[$meta])*
                 $vis $message { 1, [
-                    { message_type, MessageType },
-                    { group, Group },
-                    { status, Status },
-                  $({ $value_name, $value_type },)*
+                    { message_type, MessageType, None },
+                    { group, Group, None },
+                    { status, Status, None },
+                  $({ $value_name, $value_type, $value_range },)*
                 ] }
             );
 
