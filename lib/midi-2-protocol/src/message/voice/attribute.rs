@@ -5,4 +5,4 @@ use crate::message::{
     Value,
 };
 
-message::impl_primitive_value!(Manufacturer { u16, 48..=63 });
+message::impl_primitive_value!(pub Manufacturer { u16, 48..=63 });

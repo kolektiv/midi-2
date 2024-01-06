@@ -77,13 +77,13 @@ message::impl_primitive_value_trait_value!(Status { u8, 8..=15 });
 macro_rules! impl_message {
     (
         $(#[$meta:meta])*
-        $message:ident { $status:expr, [
+        $vis:vis $message:ident { $status:expr, [
             $({ $value_name:ident, $value_type:ty },)*
         ] }
     ) => {
             message::impl_message!(
                 $(#[$meta])*
-                $message { 1, [
+                $vis $message { 1, [
                     { message_type, MessageType },
                     { group, Group },
                     { status, Status },
@@ -96,6 +96,7 @@ macro_rules! impl_message {
 
                 fn try_init_internal(packet: &'a mut [u32]) -> Result<Self, Error> {
                     Ok(Self::try_new(packet)?
+                        .reset()
                         .set_message_type(MessageType::System)
                         .set_group(Group::default())
                         .set_status(Self::STATUS))

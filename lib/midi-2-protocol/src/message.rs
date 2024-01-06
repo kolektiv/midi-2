@@ -139,7 +139,7 @@ impl_arbitrary_value!(
     /// #
     /// # Ok::<(), Error>(())
     /// ```
-    Group { u8, 4, 4..=7 }
+    pub Group { u8, 4, 4..=7 }
 );
 
 // -----------------------------------------------------------------------------
@@ -149,9 +149,9 @@ impl_arbitrary_value!(
 // Bits
 
 pub(crate) trait Bits {
-    fn read(&self) -> &BitSlice<u32, Msb0>;
-
-    fn write(&mut self) -> &mut BitSlice<u32, Msb0>;
+    fn get(&self) -> &BitSlice<u32, Msb0>;
+    fn get_mut(&mut self) -> &mut BitSlice<u32, Msb0>;
+    fn reset(self) -> Self;
 }
 
 // -----------------------------------------------------------------------------
@@ -211,14 +211,14 @@ where
     where
         I: Integral,
     {
-        self.read()[range].load_be::<I>()
+        self.get()[range].load_be::<I>()
     }
 
     fn set_integral<I>(mut self, range: RangeInclusive<usize>, integral: I) -> Self
     where
         I: Integral,
     {
-        self.write()[range].store_be::<I>(integral);
+        self.get_mut()[range].store_be::<I>(integral);
         self
     }
 }
@@ -283,13 +283,13 @@ impl Error {
 macro_rules! impl_message {
     (
         $(#[$meta:meta])*
-        $message:ident { $size:literal, [
+        $vis:vis $message:ident { $size:literal, [
             $({ $value_name:ident, $value_type:ty },)*
         ] }
     ) => {
         $crate::message::impl_message_type!(
             $(#[$meta])*
-            $message
+            $vis $message
         );
 
         $crate::message::impl_message_constructors!($message { $size });
@@ -303,10 +303,10 @@ macro_rules! impl_message {
 macro_rules! impl_message_type {
     (
         $(#[$meta:meta])*
-        $message:ident
+        $vis:vis $message:ident
     ) => {
         $(#[$meta])*
-        pub struct $message<'a> {
+        $vis struct $message<'a> {
             bits: &'a mut BitSlice<u32, Msb0>,
         }
     };
@@ -331,7 +331,7 @@ macro_rules! impl_message_packet {
     ($message:ident { $size:literal }) => {
         ::paste::paste! {
             impl<'a> $message<'a> {
-                #[doc = "Returns an appropriately sized `u32` array for a. " $message " message."]
+                #[doc = "Returns an appropriately sized `u32` array for a `" $message "` message."]
                 #[doc = "# Examples"]
                 #[doc = "```rust"]
                 #[doc = concat!("# use ", std::module_path!(), "::")]
@@ -374,12 +374,17 @@ macro_rules! impl_message_values {
 macro_rules! impl_message_trait_bits {
     ($message:ident) => {
         impl<'a> Bits for $message<'a> {
-            fn read(&self) -> &BitSlice<u32, Msb0> {
+            fn get(&self) -> &BitSlice<u32, Msb0> {
                 &self.bits
             }
 
-            fn write(&mut self) -> &mut BitSlice<u32, Msb0> {
+            fn get_mut(&mut self) -> &mut BitSlice<u32, Msb0> {
                 &mut self.bits
+            }
+
+            fn reset(self) -> Self {
+                self.bits.fill(false);
+                self
             }
         }
     };
@@ -412,11 +417,11 @@ pub(crate) use impl_message_values;
 macro_rules! impl_arbitrary_value {
     (
         $(#[$meta:meta])*
-        $value:ident { $integral:ty, $size:literal, $range:expr }
+        $vis:vis $value:ident { $integral:ty, $size:literal, $range:expr }
     ) => {
         $crate::message::impl_arbitrary_value_type!(
             $(#[$meta])*
-            $value { $integral, $size }
+            $vis $value { $integral, $size }
         );
 
         $crate::message::impl_arbitrary_value_constructors!($value { $integral, $size });
@@ -429,11 +434,11 @@ macro_rules! impl_arbitrary_value {
 macro_rules! impl_arbitrary_value_type {
     (
         $(#[$meta:meta])*
-        $value:ident { $integral:ty, $size:literal }
+        $vis:vis $value:ident { $integral:ty, $size:literal }
     ) => {
         $(#[$meta])*
         #[derive(Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
-        pub struct $value(UInt<$integral, $size>);
+        $vis struct $value(UInt<$integral, $size>);
     };
 }
 
@@ -512,11 +517,11 @@ pub(crate) use impl_arbitrary_value_type;
 macro_rules! impl_primitive_value {
     (
         $(#[$meta:meta])*
-        $value:ident { $integral:ty, $range:expr }
+        $vis:vis $value:ident { $integral:ty, $range:expr }
     ) => {
         $crate::message::impl_primitive_value_type!(
             $(#[$meta])*
-            $value { $integral }
+            $vis $value { $integral }
         );
 
         $crate::message::impl_primitive_value_constructors!($value { $integral });
@@ -529,11 +534,11 @@ macro_rules! impl_primitive_value {
 macro_rules! impl_primitive_value_type {
     (
         $(#[$meta:meta])*
-        $value:ident { $integral:ty }
+        $vis:vis $value:ident { $integral:ty }
     ) => {
         $(#[$meta])*
         #[derive(Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
-        pub struct $value($integral);
+        $vis struct $value($integral);
     };
 }
 

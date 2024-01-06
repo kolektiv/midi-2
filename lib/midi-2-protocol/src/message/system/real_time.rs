@@ -51,7 +51,7 @@ system::impl_message!(
     /// #
     /// # Ok::<(), Error>(())
     /// ```
-    TimingClock { Status::TimingClock, [] }
+    pub TimingClock { Status::TimingClock, [] }
 );
 
 system::impl_message_try_init!(TimingClock);
@@ -84,7 +84,7 @@ system::impl_message!(
     /// #
     /// # Ok::<(), Error>(())
     /// ```
-    Start { Status::Start, [] }
+    pub Start { Status::Start, [] }
 );
 
 system::impl_message_try_init!(Start);
@@ -117,7 +117,7 @@ system::impl_message!(
     /// #
     /// # Ok::<(), Error>(())
     /// ```
-    Continue { Status::Continue, [] }
+    pub Continue { Status::Continue, [] }
 );
 
 system::impl_message_try_init!(Continue);
@@ -150,7 +150,7 @@ system::impl_message!(
     /// #
     /// # Ok::<(), Error>(())
     /// ```
-    Stop { Status::Stop, [] }
+    pub Stop { Status::Stop, [] }
 );
 
 system::impl_message_try_init!(Stop);
@@ -183,7 +183,7 @@ system::impl_message!(
     /// #
     /// # Ok::<(), Error>(())
     /// ```
-    ActiveSensing { Status::ActiveSensing, [] }
+    pub ActiveSensing { Status::ActiveSensing, [] }
 );
 
 system::impl_message_try_init!(ActiveSensing);
@@ -216,7 +216,7 @@ system::impl_message!(
     /// #
     /// # Ok::<(), Error>(())
     /// ```
-    Reset { Status::Reset, [] }
+    pub Reset { Status::Reset, [] }
 );
 
 system::impl_message_try_init!(Reset);
