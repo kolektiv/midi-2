@@ -22,7 +22,7 @@ pub enum Error {
 }
 
 impl Error {
-    pub(crate) fn conversion(value: u8) -> Self {
+    pub(crate) const fn conversion(value: u8) -> Self {
         Self::Conversion(value)
     }
 
@@ -30,7 +30,7 @@ impl Error {
         Self::Overflow(value.into(), size)
     }
 
-    pub(crate) fn size(expected: u8, actual: u8) -> Self {
+    pub(crate) const fn size(expected: u8, actual: u8) -> Self {
         Self::Size(expected, actual)
     }
 }

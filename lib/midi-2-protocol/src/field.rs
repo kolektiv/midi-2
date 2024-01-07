@@ -15,7 +15,7 @@ use crate::{
 
 // Field
 
-pub(crate) trait Field {
+pub trait Field {
     fn try_read<P>(packet: &P, range: Option<RangeInclusive<usize>>) -> Result<Self, Error>
     where
         Self: Sized,
@@ -28,7 +28,7 @@ pub(crate) trait Field {
 
 // Fields
 
-pub(crate) trait Fields {
+pub trait Fields {
     fn try_get<F>(&self, range: Option<RangeInclusive<usize>>) -> Result<F, Error>
     where
         F: Field;
@@ -102,25 +102,30 @@ macro_rules! impl_field_struct {
 macro_rules! impl_field_constructor {
     ($field:ident, $integral:ty $(, $size:literal)?) => {
         impl $field {
-            field::impl_field_constructor_fns!($integral $(, $size)?);
+            field::impl_field_constructor_fns!($field, $integral $(, $size)?);
         }
     };
 }
 
 macro_rules! impl_field_constructor_fns {
-    ($integral:ty, $size:literal) => {
+    ($field:ident, $integral:ty, $size:literal) => {
         ::paste::paste! {
             #[must_use]
             pub const fn new(value: $integral) -> Self {
                 Self(UInt::<$integral, $size>::new(value))
             }
 
+            #[doc = "Attempts to create a new [`" $field "`](" $field ") from the given value, if the given value"]
+            #[doc = "is valid (note that not all field types are total with regard to value)."]
+            #[doc = "# Errors"]
+            #[doc = "Returns an [`Error`](crate::Error) if the given value is not valid for the"]
+            #[doc = "field type."]
             pub fn try_new(value: $integral) -> Result<Self, Error> {
                 Self::try_from(value)
             }
         }
     };
-    ($integral:ty) => {
+    ($field:ident, $integral:ty) => {
         ::paste::paste! {
             #[must_use]
             pub const fn new(value: $integral) -> Self {

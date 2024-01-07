@@ -21,14 +21,15 @@ paste = "1"
 thiserror = "1"
 
 [workspace.lints.clippy]
-cargo = "warn"
-complexity = "warn"
+cargo = "deny"
+complexity = "deny"
 correctness = "deny"
+nursery = "warn"
 pedantic = "warn"
-perf = "warn"
+perf = "deny"
 restriction = "allow"
-style = "warn"
-suspicious = "warn"
+style = "deny"
+suspicious = "deny"
 
 [workspace.lints.rust]
 future_incompatible = "warn"

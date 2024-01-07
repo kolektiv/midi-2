@@ -97,6 +97,7 @@ use crate::{
 /// #
 /// # Ok::<(), Error>(())
 /// ```
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Eq, IntoPrimitive, PartialEq, TryFromPrimitive)]
 #[num_enum(error_type(name = Error, constructor = Error::conversion))]
 #[repr(u8)]
@@ -208,7 +209,7 @@ macro_rules! impl_message_packet {
                 #[doc = "// let message = " $message "::try_init(&mut packet, ...) ..."]
                 #[doc = "```"]
                 #[must_use]
-                pub fn packet() -> [u32; $size] {
+                pub const fn packet() -> [u32; $size] {
                     [0u32; $size]
                 }
             }
@@ -221,6 +222,12 @@ macro_rules! impl_message_fields {
         impl<'a> $message<'a> {
             $(
                 ::paste::paste! {
+                    #[doc = "Gets the [`" $type "`](" $type ") field from the message if the available,"]
+                    #[doc = "otherwise returning an [`Error`](crate::Error)."]
+                    #[doc = "# Errors"]
+                    #[doc = "Returns an [`Error`](crate::Error) when the data present in the message cannot be"]
+                    #[doc = "converted to the field type (not all field types are total across the range of"]
+                    #[doc = "possible values)."]
                     pub fn $name(&self) -> Result<$type, Error> {
                         self.try_get::<$type>(message::impl_message_fields_range_arg!($($range)?))
                     }
