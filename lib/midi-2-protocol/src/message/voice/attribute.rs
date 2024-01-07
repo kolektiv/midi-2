@@ -1,10 +1,14 @@
 use std::ops::RangeInclusive;
 
-use crate::message::{
-    self,
+use bitvec::field::BitField;
+
+use crate::{
+    field::{
+        self,
+        Field,
+    },
+    packet::Packet,
     Error,
-    Integrals,
-    Value,
 };
 
-message::impl_value!(pub Manufacturer { u16, 48..=63 });
+field::impl_field!(pub Manufacturer { u16, 48..=63 });

@@ -17,18 +17,26 @@ pub mod real_time;
 
 use std::ops::RangeInclusive;
 
-use crate::message::{
-    self,
+use bitvec::field::BitField;
+use num_enum::{
+    IntoPrimitive,
+    TryFromPrimitive,
+};
+
+use crate::{
+    field::{
+        self,
+        Field,
+    },
+    packet::Packet,
     Error,
-    Integrals,
-    Value,
 };
 
 // -----------------------------------------------------------------------------
-// Values
-// -----------------------------------------------------------------------------
 
-// Universal
+// Values
+
+// Status
 
 /// Status field value type.
 ///
@@ -68,11 +76,11 @@ pub enum Status {
     Reset = 0xff,
 }
 
-message::impl_value_trait_value!(Status, u8, 8..=15);
+field::impl_field_trait_field!(Status, u8, 8..=15);
 
 // -----------------------------------------------------------------------------
+
 // Macros
-// -----------------------------------------------------------------------------
 
 // Message
 
@@ -119,7 +127,3 @@ macro_rules! impl_message_try_init {
 
 pub(crate) use impl_message;
 pub(crate) use impl_message_try_init;
-use num_enum::{
-    IntoPrimitive,
-    TryFromPrimitive,
-};

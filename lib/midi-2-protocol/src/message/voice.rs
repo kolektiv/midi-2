@@ -8,6 +8,7 @@ use std::ops::RangeInclusive;
 
 use arbitrary_int::UInt;
 use bitvec::{
+    field::BitField,
     order::Msb0,
     slice::BitSlice,
     view::BitView,
@@ -17,21 +18,25 @@ use num_enum::{
     TryFromPrimitive,
 };
 
-use crate::message::{
-    self,
-    voice,
-    Bits,
+use crate::{
+    field::{
+        self,
+        Field,
+        Fields,
+    },
+    message::{
+        self,
+        voice,
+        Group,
+        MessageType,
+    },
+    packet::Packet,
     Error,
-    Group,
-    Integrals,
-    MessageType,
-    Value,
-    Values,
 };
 
 // -----------------------------------------------------------------------------
-// Values
-// -----------------------------------------------------------------------------
+
+// Fields
 
 // Opcode
 
@@ -43,26 +48,22 @@ pub enum Opcode {
     NoteOn = 0b1001,
 }
 
-message::impl_value_trait_value!(Opcode, u8, 8..=11);
-
-// -----------------------------------------------------------------------------
+field::impl_field_trait_field!(Opcode, u8, 8..=11);
 
 // Channel
 
-message::impl_value!(pub Channel { u8, 12..=15, 4 });
-
-// -----------------------------------------------------------------------------
+field::impl_field!(pub Channel { u8, 12..=15, 4 });
 
 // Other
 
-message::impl_value!(pub Data {u32, 32..=63 });
-message::impl_value!(pub Index { u8, 24..=31, 7 });
-message::impl_value!(pub Note { u8, 16..=23, 7 });
-message::impl_value!(pub Velocity { u16, 32..=47 });
+field::impl_field!(pub Data {u32, 32..=63 });
+field::impl_field!(pub Index { u8, 24..=31, 7 });
+field::impl_field!(pub Note { u8, 16..=23, 7 });
+field::impl_field!(pub Velocity { u16, 32..=47 });
 
 // -----------------------------------------------------------------------------
+
 // Messages
-// -----------------------------------------------------------------------------
 
 // Note Off
 
@@ -78,8 +79,6 @@ impl<'a> NoteOff<'a> {
             .set_velocity(velocity))
     }
 }
-
-// -----------------------------------------------------------------------------
 
 // Note On
 
@@ -97,8 +96,8 @@ impl<'a> NoteOn<'a> {
 }
 
 // -----------------------------------------------------------------------------
+
 // Macros
-// -----------------------------------------------------------------------------
 
 // Message
 

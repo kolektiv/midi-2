@@ -8,22 +8,24 @@ use bitvec::{
     view::BitView,
 };
 
-use crate::message::{
-    self,
-    system::{
+use crate::{
+    field::Fields,
+    message::{
         self,
-        Status,
+        system::{
+            self,
+            Status,
+        },
+        Group,
+        MessageType,
     },
-    Bits,
+    packet::Packet,
     Error,
-    Group,
-    MessageType,
-    Values,
 };
 
 // -----------------------------------------------------------------------------
+
 // Messages
-// -----------------------------------------------------------------------------
 
 // Timing Clock
 
@@ -56,8 +58,6 @@ system::impl_message!(
 
 system::impl_message_try_init!(TimingClock);
 
-// -----------------------------------------------------------------------------
-
 // Start
 
 system::impl_message!(
@@ -88,8 +88,6 @@ system::impl_message!(
 );
 
 system::impl_message_try_init!(Start);
-
-// -----------------------------------------------------------------------------
 
 // Continue
 
@@ -122,8 +120,6 @@ system::impl_message!(
 
 system::impl_message_try_init!(Continue);
 
-// -----------------------------------------------------------------------------
-
 // Stop
 
 system::impl_message!(
@@ -155,8 +151,6 @@ system::impl_message!(
 
 system::impl_message_try_init!(Stop);
 
-// -----------------------------------------------------------------------------
-
 // Active Sensing
 
 system::impl_message!(
@@ -187,8 +181,6 @@ system::impl_message!(
 );
 
 system::impl_message_try_init!(ActiveSensing);
-
-// -----------------------------------------------------------------------------
 
 // Reset
 

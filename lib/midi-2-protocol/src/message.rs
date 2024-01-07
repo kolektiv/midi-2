@@ -48,21 +48,24 @@ pub mod voice;
 use std::ops::RangeInclusive;
 
 use arbitrary_int::UInt;
-use bitvec::{
-    field::BitField,
-    order::Msb0,
-    slice::BitSlice,
-};
-use funty::Integral;
+use bitvec::field::BitField;
 use num_enum::{
     IntoPrimitive,
     TryFromPrimitive,
 };
-use thiserror::Error;
+
+use crate::{
+    field::{
+        self,
+        Field,
+    },
+    packet::Packet,
+    Error,
+};
 
 // -----------------------------------------------------------------------------
-// Values
-// -----------------------------------------------------------------------------
+
+// Fields
 
 // Message Type
 
@@ -106,13 +109,11 @@ pub enum MessageType {
     Stream = 0xf,
 }
 
-impl_value_trait_value!(MessageType, u8, 0..=3);
-
-// -----------------------------------------------------------------------------
+field::impl_field_trait_field!(MessageType, u8, 0..=3);
 
 // Group
 
-impl_value!(
+field::impl_field!(
     /// Group field value type.
     ///
     /// The `Group` value type accesses the 4-bit Group field present in most UMP
@@ -143,140 +144,8 @@ impl_value!(
 );
 
 // -----------------------------------------------------------------------------
-// Traits
-// -----------------------------------------------------------------------------
 
-// Bits
-
-pub(crate) trait Bits {
-    fn get(&self) -> &BitSlice<u32, Msb0>;
-    fn get_mut(&mut self) -> &mut BitSlice<u32, Msb0>;
-    fn reset(self) -> Self;
-}
-
-// -----------------------------------------------------------------------------
-
-// Integrals
-
-pub(crate) trait Integrals {
-    fn get_integral<I>(&self, range: RangeInclusive<usize>) -> I
-    where
-        I: Integral;
-
-    fn set_integral<I>(self, range: RangeInclusive<usize>, integral: I) -> Self
-    where
-        I: Integral;
-}
-
-// -----------------------------------------------------------------------------
-
-// Values
-
-pub(crate) trait Values {
-    fn get_value<V>(&self, range: Option<RangeInclusive<usize>>) -> Result<V, Error>
-    where
-        V: Value;
-
-    fn set_value<V>(self, value: V, range: Option<RangeInclusive<usize>>) -> Self
-    where
-        V: Value;
-}
-
-// -----------------------------------------------------------------------------
-
-// Value
-
-pub(crate) trait Value {
-    fn try_read<I>(integrals: &I, range: Option<RangeInclusive<usize>>) -> Result<Self, Error>
-    where
-        Self: Sized,
-        I: Integrals;
-
-    fn write<I>(self, integrals: I, range: Option<RangeInclusive<usize>>) -> I
-    where
-        I: Integrals;
-}
-
-// -----------------------------------------------------------------------------
-// Trait Implementations
-// -----------------------------------------------------------------------------
-
-// Integrals
-
-impl<B> Integrals for B
-where
-    B: Bits,
-{
-    fn get_integral<I>(&self, range: RangeInclusive<usize>) -> I
-    where
-        I: Integral,
-    {
-        self.get()[range].load_be::<I>()
-    }
-
-    fn set_integral<I>(mut self, range: RangeInclusive<usize>, integral: I) -> Self
-    where
-        I: Integral,
-    {
-        self.get_mut()[range].store_be::<I>(integral);
-        self
-    }
-}
-
-// -----------------------------------------------------------------------------
-
-// Values
-
-impl<I> Values for I
-where
-    I: Integrals,
-{
-    fn get_value<V>(&self, range: Option<RangeInclusive<usize>>) -> Result<V, Error>
-    where
-        V: Value,
-    {
-        V::try_read(self, range)
-    }
-
-    fn set_value<V>(self, value: V, range: Option<RangeInclusive<usize>>) -> Self
-    where
-        V: Value,
-    {
-        value.write(self, range)
-    }
-}
-
-// -----------------------------------------------------------------------------
-// Errors
-// -----------------------------------------------------------------------------
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error("Conversion: Attempted to convert from {0}, not a valid variant.")]
-    Conversion(u8),
-    #[error("Overflow: Attempted to store value {0} in a {1} bit type.")]
-    Overflow(u64, u8),
-    #[error("Size: Expected a packet of {0} bits, but found {1} bits.")]
-    Size(u8, u8),
-}
-
-impl Error {
-    pub(crate) fn conversion(value: u8) -> Self {
-        Self::Conversion(value)
-    }
-
-    pub(crate) fn overflow(value: impl Into<u64>, size: u8) -> Self {
-        Self::Overflow(value.into(), size)
-    }
-
-    pub(crate) fn size(expected: u8, actual: u8) -> Self {
-        Self::Size(expected, actual)
-    }
-}
-
-// -----------------------------------------------------------------------------
 // Macros
-// -----------------------------------------------------------------------------
 
 // Message
 
@@ -287,24 +156,17 @@ macro_rules! impl_message {
             $({ $value_name:ident, $value_type:ty, $value_range:expr },)*
         ] }
     ) => {
-        $crate::message::impl_message_type!(
-            $(#[$meta])*
-            $vis $message
-        );
-
-        $crate::message::impl_message_constructors!($message { $size });
-        $crate::message::impl_message_packet!($message { $size });
+        $crate::message::impl_message_struct!($($meta)*, $vis, $message);
+        $crate::message::impl_message_constructor!($message, $size);
+        $crate::message::impl_message_packet!($message, $size);
         $crate::message::impl_message_trait_bits!($message);
-        $crate::message::impl_message_trait_debug!($message {[ $({ $value_name, $value_type },)* ]});
-        $crate::message::impl_message_values!($message {[ $({ $value_name, $value_type, $value_range },)* ]});
+        $crate::message::impl_message_trait_debug!($message, $({ $value_name, $value_type },)*);
+        $crate::message::impl_message_fields!($message, $({ $value_name, $value_type, $value_range },)*);
     };
 }
 
-macro_rules! impl_message_type {
-    (
-        $(#[$meta:meta])*
-        $vis:vis $message:ident
-    ) => {
+macro_rules! impl_message_struct {
+    ($($meta:meta)*, $vis:vis, $message:ident) => {
         $(#[$meta])*
         $vis struct $message<'a> {
             bits: &'a mut BitSlice<u32, Msb0>,
@@ -312,8 +174,8 @@ macro_rules! impl_message_type {
     };
 }
 
-macro_rules! impl_message_constructors {
-    ($message:ident { $size:literal }) => {
+macro_rules! impl_message_constructor {
+    ($message:ident, $size:literal) => {
         impl<'a> $message<'a> {
             pub(crate) fn try_new(packet: &'a mut [u32]) -> Result<Self, Error> {
                 let bits = packet.view_bits_mut();
@@ -328,7 +190,7 @@ macro_rules! impl_message_constructors {
 }
 
 macro_rules! impl_message_packet {
-    ($message:ident { $size:literal }) => {
+    ($message:ident, $size:literal) => {
         ::paste::paste! {
             impl<'a> $message<'a> {
                 #[doc = "Returns an appropriately sized `u32` array for a `" $message "` message."]
@@ -352,18 +214,20 @@ macro_rules! impl_message_packet {
     };
 }
 
-macro_rules! impl_message_values {
-    ($message:ident { [$({ $value_name:ident, $value_type:ty, $value_range:expr },)*] }) => {
+// TODO: Optional Ranges Here?
+
+macro_rules! impl_message_fields {
+    ($message:ident, $({ $field_name:ident, $field_type:ty, $field_range:expr },)*) => {
         impl<'a> $message<'a> {
             $(
-                pub fn $value_name(&self) -> Result<$value_type, Error> {
-                    self.get_value::<$value_type>($value_range)
+                pub fn $field_name(&self) -> Result<$field_type, Error> {
+                    self.try_get::<$field_type>($field_range)
                 }
 
                 ::paste::paste! {
                     #[must_use]
-                    pub fn [<set_ $value_name>](self, $value_name: $value_type) -> Self {
-                        self.set_value::<$value_type>($value_name, $value_range)
+                    pub fn [<set_ $field_name>](self, $field_name: $field_type) -> Self {
+                        self.set::<$field_type>($field_name, $field_range)
                     }
                 }
             )*
@@ -373,7 +237,7 @@ macro_rules! impl_message_values {
 
 macro_rules! impl_message_trait_bits {
     ($message:ident) => {
-        impl<'a> Bits for $message<'a> {
+        impl<'a> Packet for $message<'a> {
             fn get(&self) -> &BitSlice<u32, Msb0> {
                 &self.bits
             }
@@ -391,11 +255,11 @@ macro_rules! impl_message_trait_bits {
 }
 
 macro_rules! impl_message_trait_debug {
-    ($message:ident { [$({ $value_name:ident, $value_type:ty },)*] }) => {
+    ($message:ident, $({ $field_name:ident, $value_type:ty },)*) => {
         impl<'a> ::core::fmt::Debug for $message<'a> {
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                 f.debug_struct(stringify!($message))
-                  $(.field(stringify!($value_name), &self.$value_name().unwrap()))*
+                  $(.field(stringify!($field_name), &self.$field_name().unwrap()))*
                     .finish()
             }
         }
@@ -403,155 +267,9 @@ macro_rules! impl_message_trait_debug {
 }
 
 pub(crate) use impl_message;
-pub(crate) use impl_message_constructors;
+pub(crate) use impl_message_constructor;
+pub(crate) use impl_message_fields;
 pub(crate) use impl_message_packet;
+pub(crate) use impl_message_struct;
 pub(crate) use impl_message_trait_bits;
 pub(crate) use impl_message_trait_debug;
-pub(crate) use impl_message_type;
-pub(crate) use impl_message_values;
-
-// -----------------------------------------------------------------------------
-
-// Value
-
-macro_rules! impl_value {
-    (
-        $(#[$meta:meta])*
-        $vis:vis $value:ident { $integral:ty, $range:expr $(, $size:literal)? }
-    ) => {
-        $crate::message::impl_value_type!($($meta)*, $vis, $value, $integral $(, $size)?);
-        $crate::message::impl_value_constructor!($value, $integral $(, $size)?);
-        $crate::message::impl_value_trait_from!($value, $integral $(, $size)?);
-        $crate::message::impl_value_trait_try_from!($value, $integral $(, $size)?);
-        $crate::message::impl_value_trait_value!($value, $integral, $range);
-    };
-}
-
-macro_rules! impl_value_type {
-    ($($meta:meta)*, $vis:vis, $value:ident, $integral:ty, $size:literal) => {
-        $(#[$meta])*
-        #[derive(Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
-        $vis struct $value(UInt<$integral, $size>);
-    };
-    ($($meta:meta)*, $vis:vis, $value:ident, $integral:ty) => {
-        $(#[$meta])*
-        #[derive(Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
-        $vis struct $value($integral);
-    };
-}
-
-macro_rules! impl_value_constructor {
-    ($value:ident, $integral:ty $(, $size:literal)?) => {
-        impl $value {
-            crate::message::impl_value_constructor_fns!($integral $(, $size)?);
-        }
-    };
-}
-
-macro_rules! impl_value_constructor_fns {
-    ($integral:ty, $size:literal) => {
-        ::paste::paste! {
-            #[must_use]
-            pub const fn new(value: $integral) -> Self {
-                Self(UInt::<$integral, $size>::new(value))
-            }
-
-            pub fn try_new(value: $integral) -> Result<Self, Error> {
-                Self::try_from(value)
-            }
-        }
-    };
-    ($integral:ty) => {
-        ::paste::paste! {
-            #[must_use]
-            pub const fn new(value: $integral) -> Self {
-                Self(value)
-            }
-        }
-    };
-}
-
-macro_rules! impl_value_trait_from {
-    ($value:ident, $integral:ty $(, $size:literal)?) => {
-        impl From<$value> for $integral {
-            crate::message::impl_value_trait_from_fns!($value, $integral $(, $size)?);
-        }
-    };
-}
-
-macro_rules! impl_value_trait_from_fns {
-    ($value:ident, $integral:ty, $size:literal) => {
-        fn from(value: $value) -> Self {
-            value.0.value()
-        }
-    };
-    ($value:ident, $integral:ty) => {
-        fn from(value: $value) -> Self {
-            value.0
-        }
-    };
-}
-
-macro_rules! impl_value_trait_try_from {
-    ($value:ident, $integral:ty $(, $size:literal)?) => {
-        impl TryFrom<$integral> for $value {
-            type Error = Error;
-
-            crate::message::impl_value_trait_try_from_fns!($value, $integral $(, $size)?);
-        }
-    };
-}
-
-macro_rules! impl_value_trait_try_from_fns {
-    ($value:ident, $integral:ty, $size:literal) => {
-        fn try_from(value: $integral) -> Result<Self, Self::Error> {
-            UInt::<$integral, $size>::try_new(value)
-                .map_err(|_| Error::overflow(value, $size))
-                .map($value)
-        }
-    };
-    ($value:ident, $integral:ty) => {
-        fn try_from(value: $integral) -> Result<Self, Self::Error> {
-            Ok($value(value))
-        }
-    };
-}
-
-macro_rules! impl_value_trait_value {
-    ($value:ident, $integral:ty, $range:expr) => {
-        impl Value for $value {
-            fn try_read<I>(
-                integrals: &I,
-                range: Option<RangeInclusive<usize>>,
-            ) -> Result<Self, Error>
-            where
-                I: Integrals,
-            {
-                let range = range.unwrap_or($range);
-                let integral = integrals.get_integral::<$integral>(range);
-
-                Self::try_from(integral)
-            }
-
-            fn write<I>(self, integrals: I, range: Option<RangeInclusive<usize>>) -> I
-            where
-                I: Integrals,
-            {
-                let range = range.unwrap_or($range);
-                let integral = <$integral>::from(self);
-
-                integrals.set_integral::<$integral>(range, integral)
-            }
-        }
-    };
-}
-
-pub(crate) use impl_value;
-pub(crate) use impl_value_constructor;
-pub(crate) use impl_value_constructor_fns;
-pub(crate) use impl_value_trait_from;
-pub(crate) use impl_value_trait_from_fns;
-pub(crate) use impl_value_trait_try_from;
-pub(crate) use impl_value_trait_try_from_fns;
-pub(crate) use impl_value_trait_value;
-pub(crate) use impl_value_type;
