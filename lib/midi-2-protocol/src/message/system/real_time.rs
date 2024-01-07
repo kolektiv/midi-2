@@ -38,6 +38,7 @@ system::impl_message!(
     /// # Examples
     ///
     /// ```rust
+    /// # use midi_2_protocol::*;
     /// # use midi_2_protocol::message::*;
     /// # use midi_2_protocol::message::system::*;
     /// # use midi_2_protocol::message::system::real_time::*;
@@ -69,6 +70,7 @@ system::impl_message!(
     /// # Examples
     ///
     /// ```rust
+    /// # use midi_2_protocol::*;
     /// # use midi_2_protocol::message::*;
     /// # use midi_2_protocol::message::system::*;
     /// # use midi_2_protocol::message::system::real_time::*;
@@ -100,6 +102,7 @@ system::impl_message!(
     /// # Examples
     ///
     /// ```rust
+    /// # use midi_2_protocol::*;
     /// # use midi_2_protocol::message::*;
     /// # use midi_2_protocol::message::system::*;
     /// # use midi_2_protocol::message::system::real_time::*;
@@ -131,6 +134,7 @@ system::impl_message!(
     /// # Examples
     ///
     /// ```rust
+    /// # use midi_2_protocol::*;
     /// # use midi_2_protocol::message::*;
     /// # use midi_2_protocol::message::system::*;
     /// # use midi_2_protocol::message::system::real_time::*;
@@ -162,6 +166,7 @@ system::impl_message!(
     /// # Examples
     ///
     /// ```rust
+    /// # use midi_2_protocol::*;
     /// # use midi_2_protocol::message::*;
     /// # use midi_2_protocol::message::system::*;
     /// # use midi_2_protocol::message::system::real_time::*;
@@ -193,6 +198,7 @@ system::impl_message!(
     /// # Examples
     ///
     /// ```rust
+    /// # use midi_2_protocol::*;
     /// # use midi_2_protocol::message::*;
     /// # use midi_2_protocol::message::system::*;
     /// # use midi_2_protocol::message::system::real_time::*;

@@ -86,6 +86,7 @@ use crate::{
 /// # Examples
 ///
 /// ```rust
+/// # use midi_2_protocol::*;
 /// # use midi_2_protocol::message::*;
 /// # use midi_2_protocol::message::system::real_time::*;
 /// #
@@ -124,6 +125,7 @@ field::impl_field!(
     /// # Examples
     ///
     /// ```rust
+    /// # use midi_2_protocol::*;
     /// # use midi_2_protocol::message::*;
     /// # use midi_2_protocol::message::system::real_time::*;
     /// #

@@ -49,7 +49,7 @@ use crate::{
 /// # Examples
 ///
 /// ```rust
-/// # use midi_2_protocol::message::Error;
+/// # use midi_2_protocol::Error;
 /// # use midi_2_protocol::message::system::Status;
 /// # use midi_2_protocol::message::system::real_time::TimingClock;
 /// #
