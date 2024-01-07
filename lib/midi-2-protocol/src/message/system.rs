@@ -34,13 +34,13 @@ use crate::{
 
 // -----------------------------------------------------------------------------
 
-// Values
+// Fields
 
 // Status
 
-/// Status field value type.
+/// Status field type.
 ///
-/// The `Status` value type accesses the 8-bit Status field of a `System`
+/// The `Status` field type accesses the 8-bit Status field of a `System`
 /// message **([M2-104-UM 7.6])**. Messages which contain the `Status` type will
 /// have functions for getting and setting the Status value, although this is
 /// not usually required as it will generally be set on initialization of a
@@ -88,15 +88,15 @@ macro_rules! impl_message {
     (
         $(#[$meta:meta])*
         $vis:vis $message:ident { $status:expr, [
-            $({ $value_name:ident, $value_type:ty, $value_range:expr },)*
+            $({ $value_name:ident, $value_type:ty $(, $value_range:expr)? },)*
         ] }
     ) => {
             message::impl_message!(
                 $(#[$meta])*
                 $vis $message { 1, [
-                    { message_type, MessageType, None },
-                    { group, Group, None },
-                    { status, Status, None },
+                    { message_type, MessageType },
+                    { group, Group },
+                    { status, Status },
                   $({ $value_name, $value_type, $value_range },)*
                 ] }
             );

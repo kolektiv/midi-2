@@ -68,8 +68,8 @@ field::impl_field!(pub Velocity { u16, 32..=47 });
 // Note Off
 
 voice::impl_message!(pub NoteOff { Opcode::NoteOff, [
-    { note, Note, None },
-    { velocity, Velocity, None },
+    { note, Note },
+    { velocity, Velocity },
 ] });
 
 impl<'a> NoteOff<'a> {
@@ -83,8 +83,8 @@ impl<'a> NoteOff<'a> {
 // Note On
 
 voice::impl_message!(pub NoteOn { Opcode::NoteOn, [
-    { note, Note, None },
-    { velocity, Velocity, None },
+    { note, Note },
+    { velocity, Velocity },
 ] });
 
 impl<'a> NoteOn<'a> {
@@ -105,17 +105,17 @@ macro_rules! impl_message {
     (
         $(#[$meta:meta])*
         $vis:vis $message:ident { $opcode:expr, [
-            $({ $value_name:ident, $value_type:ty, $value_range:expr },)*
+            $({ $value_name:ident, $value_type:ty $(, $value_range:expr)? },)*
         ] }
     ) => {
             message::impl_message!(
                 $(#[$meta])*
                 $vis $message { 2, [
-                    { message_type, MessageType, None },
-                    { group, Group, None },
-                    { opcode, Opcode, None },
-                    { channel, Channel, None },
-                  $({ $value_name, $value_type, $value_range },)*
+                    { message_type, MessageType },
+                    { group, Group },
+                    { opcode, Opcode },
+                    { channel, Channel },
+                  $({ $value_name, $value_type $(, $value_range)? },)*
                 ] }
             );
 

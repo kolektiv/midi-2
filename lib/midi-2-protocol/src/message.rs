@@ -4,7 +4,7 @@
 
 //! UMP Format messages for MIDI 2.x.
 //!
-//! The message types, and associated value types implemented as part of
+//! The message types, and associated field types implemented as part of
 //! [`message`](crate::message) implement a typed approach to working with UMP
 //! Format messages (as Universal MIDI Packets -- variable-length arrays of N *
 //! 32-bits). See the specification ([M2-104-UMP][1]) for the full details of
@@ -69,9 +69,9 @@ use crate::{
 
 // Message Type
 
-/// Message Type field value type.
+/// Message Type field type.
 ///
-/// The `MessageType` value type access the 4-bit Message Type field present in
+/// The `MessageType` field type access the 4-bit Message Type field present in
 /// all UMP messages **([M2-104-UM 2.1.2])**.
 ///
 /// All messages provide `message_type(...)` and `set_message_type(...)`
@@ -114,9 +114,9 @@ field::impl_field_trait_field!(MessageType, u8, 0..=3);
 // Group
 
 field::impl_field!(
-    /// Group field value type.
+    /// Group field type.
     ///
-    /// The `Group` value type accesses the 4-bit Group field present in most UMP
+    /// The `Group` field type accesses the 4-bit Group field present in most UMP
     /// messages (exluding Utility and Stream messages) **([M2-104-UM 2.1.2])**.
     /// Messages which contain a Group field provide `group(...)` and
     /// `set_group(...)` functions to read and write the Group value.
@@ -153,15 +153,15 @@ macro_rules! impl_message {
     (
         $(#[$meta:meta])*
         $vis:vis $message:ident { $size:literal, [
-            $({ $value_name:ident, $value_type:ty, $value_range:expr },)*
+            $({ $name:ident, $type:ty $(, $range:expr)? },)*
         ] }
     ) => {
-        $crate::message::impl_message_struct!($($meta)*, $vis, $message);
-        $crate::message::impl_message_constructor!($message, $size);
-        $crate::message::impl_message_packet!($message, $size);
-        $crate::message::impl_message_trait_bits!($message);
-        $crate::message::impl_message_trait_debug!($message, $({ $value_name, $value_type },)*);
-        $crate::message::impl_message_fields!($message, $({ $value_name, $value_type, $value_range },)*);
+        message::impl_message_struct!($($meta)*, $vis, $message);
+        message::impl_message_constructor!($message, $size);
+        message::impl_message_packet!($message, $size);
+        message::impl_message_trait_bits!($message);
+        message::impl_message_trait_debug!($message, $({ $name },)*);
+        message::impl_message_fields!($message, $({ $name, $type $(, $range)? },)*);
     };
 }
 
@@ -214,24 +214,31 @@ macro_rules! impl_message_packet {
     };
 }
 
-// TODO: Optional Ranges Here?
-
 macro_rules! impl_message_fields {
-    ($message:ident, $({ $field_name:ident, $field_type:ty, $field_range:expr },)*) => {
+    ($message:ident, $({ $name:ident, $type:ty $(, $range:expr)? },)*) => {
         impl<'a> $message<'a> {
             $(
-                pub fn $field_name(&self) -> Result<$field_type, Error> {
-                    self.try_get::<$field_type>($field_range)
-                }
-
                 ::paste::paste! {
+                    pub fn $name(&self) -> Result<$type, Error> {
+                        self.try_get::<$type>(message::impl_message_fields_range_arg!($($range)?))
+                    }
+
                     #[must_use]
-                    pub fn [<set_ $field_name>](self, $field_name: $field_type) -> Self {
-                        self.set::<$field_type>($field_name, $field_range)
+                    pub fn [<set_ $name>](self, $name: $type) -> Self {
+                        self.set::<$type>($name, message::impl_message_fields_range_arg!($($range)?))
                     }
                 }
             )*
         }
+    };
+}
+
+macro_rules! impl_message_fields_range_arg {
+    ($range:expr) => {
+        Some($range)
+    };
+    () => {
+        None
     };
 }
 
@@ -255,20 +262,25 @@ macro_rules! impl_message_trait_bits {
 }
 
 macro_rules! impl_message_trait_debug {
-    ($message:ident, $({ $field_name:ident, $value_type:ty },)*) => {
+    ($message:ident, $({ $name:ident },)*) => {
         impl<'a> ::core::fmt::Debug for $message<'a> {
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                 f.debug_struct(stringify!($message))
-                  $(.field(stringify!($field_name), &self.$field_name().unwrap()))*
+                  $(.field(stringify!($name), &self.$name().unwrap()))*
                     .finish()
             }
         }
     };
 }
 
+// -----------------------------------------------------------------------------
+
+// Macro Exports
+
 pub(crate) use impl_message;
 pub(crate) use impl_message_constructor;
 pub(crate) use impl_message_fields;
+pub(crate) use impl_message_fields_range_arg;
 pub(crate) use impl_message_packet;
 pub(crate) use impl_message_struct;
 pub(crate) use impl_message_trait_bits;

@@ -72,37 +72,37 @@ where
 macro_rules! impl_field {
     (
         $(#[$meta:meta])*
-        $vis:vis $value:ident { $integral:ty, $range:expr $(, $size:literal)? }
+        $vis:vis $field:ident { $integral:ty, $range:expr $(, $size:literal)? }
     ) => {
-        $crate::field::impl_field_struct!($($meta)*, $vis, $value, $integral $(, $size)?);
-        $crate::field::impl_field_constructor!($value, $integral $(, $size)?);
-        $crate::field::impl_field_trait_from!($value, $integral $(, $size)?);
-        $crate::field::impl_field_trait_try_from!($value, $integral $(, $size)?);
-        $crate::field::impl_field_trait_field!($value, $integral, $range);
+        field::impl_field_struct!($($meta)*, $vis, $field, $integral $(, $size)?);
+        field::impl_field_constructor!($field, $integral $(, $size)?);
+        field::impl_field_trait_from!($field, $integral $(, $size)?);
+        field::impl_field_trait_try_from!($field, $integral $(, $size)?);
+        field::impl_field_trait_field!($field, $integral, $range);
     };
 }
 
 // Field Struct
 
 macro_rules! impl_field_struct {
-    ($($meta:meta)*, $vis:vis, $value:ident, $integral:ty, $size:literal) => {
+    ($($meta:meta)*, $vis:vis, $field:ident, $integral:ty, $size:literal) => {
         $(#[$meta])*
         #[derive(Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
-        $vis struct $value(UInt<$integral, $size>);
+        $vis struct $field(UInt<$integral, $size>);
     };
-    ($($meta:meta)*, $vis:vis, $value:ident, $integral:ty) => {
+    ($($meta:meta)*, $vis:vis, $field:ident, $integral:ty) => {
         $(#[$meta])*
         #[derive(Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
-        $vis struct $value($integral);
+        $vis struct $field($integral);
     };
 }
 
 // Field Constructor
 
 macro_rules! impl_field_constructor {
-    ($value:ident, $integral:ty $(, $size:literal)?) => {
-        impl $value {
-            crate::field::impl_field_constructor_fns!($integral $(, $size)?);
+    ($field:ident, $integral:ty $(, $size:literal)?) => {
+        impl $field {
+            field::impl_field_constructor_fns!($integral $(, $size)?);
         }
     };
 }
@@ -133,21 +133,21 @@ macro_rules! impl_field_constructor_fns {
 // Field Trait - From
 
 macro_rules! impl_field_trait_from {
-    ($value:ident, $integral:ty $(, $size:literal)?) => {
-        impl From<$value> for $integral {
-            crate::field::impl_field_trait_from_fns!($value, $integral $(, $size)?);
+    ($field:ident, $integral:ty $(, $size:literal)?) => {
+        impl From<$field> for $integral {
+            field::impl_field_trait_from_fns!($field, $integral $(, $size)?);
         }
     };
 }
 
 macro_rules! impl_field_trait_from_fns {
-    ($value:ident, $integral:ty, $size:literal) => {
-        fn from(value: $value) -> Self {
+    ($field:ident, $integral:ty, $size:literal) => {
+        fn from(value: $field) -> Self {
             value.0.value()
         }
     };
-    ($value:ident, $integral:ty) => {
-        fn from(value: $value) -> Self {
+    ($field:ident, $integral:ty) => {
+        fn from(value: $field) -> Self {
             value.0
         }
     };
@@ -156,26 +156,26 @@ macro_rules! impl_field_trait_from_fns {
 // Field Trait - Try From
 
 macro_rules! impl_field_trait_try_from {
-    ($value:ident, $integral:ty $(, $size:literal)?) => {
-        impl TryFrom<$integral> for $value {
+    ($field:ident, $integral:ty $(, $size:literal)?) => {
+        impl TryFrom<$integral> for $field {
             type Error = Error;
 
-            crate::field::impl_field_trait_try_from_fns!($value, $integral $(, $size)?);
+            field::impl_field_trait_try_from_fns!($field, $integral $(, $size)?);
         }
     };
 }
 
 macro_rules! impl_field_trait_try_from_fns {
-    ($value:ident, $integral:ty, $size:literal) => {
+    ($field:ident, $integral:ty, $size:literal) => {
         fn try_from(value: $integral) -> Result<Self, Self::Error> {
             UInt::<$integral, $size>::try_new(value)
                 .map_err(|_| Error::overflow(value, $size))
-                .map($value)
+                .map($field)
         }
     };
-    ($value:ident, $integral:ty) => {
+    ($field:ident, $integral:ty) => {
         fn try_from(value: $integral) -> Result<Self, Self::Error> {
-            Ok($value(value))
+            Ok($field(value))
         }
     };
 }
