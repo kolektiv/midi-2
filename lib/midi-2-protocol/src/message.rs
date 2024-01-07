@@ -5,18 +5,18 @@
 //! UMP Format messages for MIDI 2.x.
 //!
 //! The message types, and associated field types implemented as part of
-//! [`message`](crate::message) implement a typed approach to working with UMP
+//! [`message`](crate::message) provide a typed approach to working with UMP
 //! Format messages (as Universal MIDI Packets -- variable-length arrays of N *
 //! 32-bits). See the specification ([M2-104-UMP][1]) for the full details of
 //! the UMP Format and the MIDI 2.x Protocol.
-//!
-//! (Note that references are made to the specification throughout, including
-//! relevant section numbers where appropriate).
 //!
 //! This is only implemented for the MIDI 2.x Protocol -- support for the legacy
 //! MIDI 1.0 message types within UMP is not provided, so MIDI 1.0 Channel Voice
 //! Messages **([M2-104-UMP 7.3])** (and associated types and values) are not
 //! implemented.
+//!
+//! Note that references are made to the specification throughout, including
+//! relevant section numbers where appropriate.
 //!
 //! # Examples
 //!
