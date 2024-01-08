@@ -44,8 +44,21 @@ use crate::{
 #[num_enum(error_type(name = Error, constructor = Error::conversion))]
 #[repr(u8)]
 pub enum Opcode {
-    NoteOff = 0b1000,
-    NoteOn = 0b1001,
+    RegisteredPerNoteController = 0x0,
+    AssignablePerNoteController = 0x1,
+    RegisteredController = 0x2,
+    AssignableController = 0x3,
+    RelativeRegisteredController = 0x4,
+    RelativeAssignableController = 0x5,
+    PerNotePitchBend = 0x6,
+    NoteOff = 0x8,
+    NoteOn = 0x9,
+    PolyPressure = 0xa,
+    ControlChange = 0xb,
+    ProgramChange = 0xc,
+    ChannelPressure = 0xd,
+    PitchBend = 0xe,
+    PerNoteManagement = 0xf,
 }
 
 field::impl_field_trait_field!(Opcode, u8, 8..=11);
@@ -56,14 +69,149 @@ field::impl_field!(pub Channel { u8, 12..=15, 4 });
 
 // Other
 
+field::impl_field!(pub Bank { u8, 16..=23, 7 });
+field::impl_field!(pub Controller { u8, 24..=31, 7 });
 field::impl_field!(pub Data {u32, 32..=63 });
-field::impl_field!(pub Index { u8, 24..=31, 7 });
 field::impl_field!(pub Note { u8, 16..=23, 7 });
+field::impl_field!(pub PerNoteController { u8, 24..=31 });
 field::impl_field!(pub Velocity { u16, 32..=47 });
 
 // -----------------------------------------------------------------------------
 
 // Messages
+
+// Registered Per-Note Controller
+
+voice::impl_message!(pub RegisteredPerNoteController { Opcode::RegisteredPerNoteController, [
+    { note, Note },
+    { per_note_controller, PerNoteController },
+    { data, Data },
+] });
+
+impl<'a> RegisteredPerNoteController<'a> {
+    pub fn try_init(
+        packet: &'a mut [u32],
+        note: Note,
+        per_note_controller: PerNoteController,
+    ) -> Result<Self, Error> {
+        Ok(Self::try_init_internal(packet)?
+            .set_note(note)
+            .set_per_note_controller(per_note_controller))
+    }
+}
+
+// Assignable Per-Note Controller
+
+voice::impl_message!(pub AssignablePerNoteController { Opcode::AssignablePerNoteController, [
+    { note, Note },
+    { per_note_controller, PerNoteController },
+    { data, Data },
+] });
+
+impl<'a> AssignablePerNoteController<'a> {
+    pub fn try_init(
+        packet: &'a mut [u32],
+        note: Note,
+        per_note_controller: PerNoteController,
+    ) -> Result<Self, Error> {
+        Ok(Self::try_init_internal(packet)?
+            .set_note(note)
+            .set_per_note_controller(per_note_controller))
+    }
+}
+
+// Registered Controller
+
+voice::impl_message!(pub RegisteredController { Opcode::RegisteredController, [
+    { bank, Bank },
+    { controller, Controller },
+    { data, Data },
+] });
+
+impl<'a> RegisteredController<'a> {
+    pub fn try_init(
+        packet: &'a mut [u32],
+        bank: Bank,
+        controller: Controller,
+    ) -> Result<Self, Error> {
+        Ok(Self::try_init_internal(packet)?
+            .set_bank(bank)
+            .set_controller(controller))
+    }
+}
+
+// Assignable Controller
+
+voice::impl_message!(pub AssignableController { Opcode::AssignableController, [
+    { bank, Bank },
+    { controller, Controller },
+    { data, Data },
+] });
+
+impl<'a> AssignableController<'a> {
+    pub fn try_init(
+        packet: &'a mut [u32],
+        bank: Bank,
+        controller: Controller,
+    ) -> Result<Self, Error> {
+        Ok(Self::try_init_internal(packet)?
+            .set_bank(bank)
+            .set_controller(controller))
+    }
+}
+
+// Relative Registered Controller
+
+voice::impl_message!(pub RelativeRegisteredController { Opcode::RelativeRegisteredController, [
+    { bank, Bank },
+    { controller, Controller },
+    { data, Data },
+] });
+
+impl<'a> RelativeRegisteredController<'a> {
+    pub fn try_init(
+        packet: &'a mut [u32],
+        bank: Bank,
+        controller: Controller,
+    ) -> Result<Self, Error> {
+        Ok(Self::try_init_internal(packet)?
+            .set_bank(bank)
+            .set_controller(controller))
+    }
+}
+
+// Relative Assignable Controller
+
+voice::impl_message!(pub RelativeAssignableController { Opcode::RelativeAssignableController, [
+    { bank, Bank },
+    { controller, Controller },
+    { data, Data },
+] });
+
+impl<'a> RelativeAssignableController<'a> {
+    pub fn try_init(
+        packet: &'a mut [u32],
+        bank: Bank,
+        controller: Controller,
+    ) -> Result<Self, Error> {
+        Ok(Self::try_init_internal(packet)?
+            .set_bank(bank)
+            .set_controller(controller))
+    }
+}
+
+// Per-Note Pitch Bend
+
+voice::impl_message!(pub PerNotePitchBend { Opcode::PerNotePitchBend, [
+    { note, Note },
+    { data, Data },
+] });
+
+impl<'a> PerNotePitchBend<'a> {
+    pub fn try_init(packet: &'a mut [u32], note: Note) -> Result<Self, Error> {
+        Ok(Self::try_init_internal(packet)?.set_note(note))
+    }
+}
 
 // Note Off
 
