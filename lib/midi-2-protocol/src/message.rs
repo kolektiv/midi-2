@@ -45,8 +45,6 @@
 pub mod system;
 pub mod voice;
 
-use std::ops::RangeInclusive;
-
 use arbitrary_int::UInt;
 use bitvec::field::BitField;
 use num_enum::{
@@ -156,7 +154,7 @@ macro_rules! impl_message {
     (
         $(#[$meta:meta])*
         $vis:vis $message:ident { $size:literal, [
-            $({ $name:ident, $type:ty $(, $range:expr)? },)*
+            $({ $name:ident, $type:ty },)*
         ] }
     ) => {
         message::impl_message_struct!($($meta)*, $vis, $message);
@@ -164,7 +162,7 @@ macro_rules! impl_message {
         message::impl_message_packet!($message, $size);
         message::impl_message_trait_bits!($message);
         message::impl_message_trait_debug!($message, $({ $name },)*);
-        message::impl_message_fields!($message, $({ $name, $type $(, $range)? },)*);
+        message::impl_message_fields!($message, $({ $name, $type },)*);
     };
 }
 
@@ -218,7 +216,7 @@ macro_rules! impl_message_packet {
 }
 
 macro_rules! impl_message_fields {
-    ($message:ident, $({ $name:ident, $type:ty $(, $range:expr)? },)*) => {
+    ($message:ident, $({ $name:ident, $type:ty },)*) => {
         impl<'a> $message<'a> {
             $(
                 ::paste::paste! {
@@ -229,25 +227,16 @@ macro_rules! impl_message_fields {
                     #[doc = "converted to the field type (not all field types are total across the range of"]
                     #[doc = "possible values)."]
                     pub fn $name(&self) -> Result<$type, Error> {
-                        self.try_get::<$type>(message::impl_message_fields_range_arg!($($range)?))
+                        self.try_get::<$type>()
                     }
 
                     #[must_use]
                     pub fn [<set_ $name>](self, $name: $type) -> Self {
-                        self.set::<$type>($name, message::impl_message_fields_range_arg!($($range)?))
+                        self.set::<$type>($name)
                     }
                 }
             )*
         }
-    };
-}
-
-macro_rules! impl_message_fields_range_arg {
-    ($range:expr) => {
-        Some($range)
-    };
-    () => {
-        None
     };
 }
 
@@ -289,7 +278,6 @@ macro_rules! impl_message_trait_debug {
 pub(crate) use impl_message;
 pub(crate) use impl_message_constructor;
 pub(crate) use impl_message_fields;
-pub(crate) use impl_message_fields_range_arg;
 pub(crate) use impl_message_packet;
 pub(crate) use impl_message_struct;
 pub(crate) use impl_message_trait_bits;

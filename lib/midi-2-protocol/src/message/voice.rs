@@ -4,8 +4,6 @@
 
 pub mod attribute;
 
-use std::ops::RangeInclusive;
-
 use arbitrary_int::UInt;
 use bitvec::{
     field::BitField,
@@ -253,7 +251,7 @@ macro_rules! impl_message {
     (
         $(#[$meta:meta])*
         $vis:vis $message:ident { $opcode:expr, [
-            $({ $value_name:ident, $value_type:ty $(, $value_range:expr)? },)*
+            $({ $name:ident, $type:ty },)*
         ] }
     ) => {
             message::impl_message!(
@@ -263,7 +261,7 @@ macro_rules! impl_message {
                     { group, Group },
                     { opcode, Opcode },
                     { channel, Channel },
-                  $({ $value_name, $value_type $(, $value_range)? },)*
+                  $({ $name, $type },)*
                 ] }
             );
 

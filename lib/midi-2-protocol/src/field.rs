@@ -2,8 +2,6 @@
 // Field
 // =============================================================================
 
-use std::ops::RangeInclusive;
-
 use crate::{
     packet::Packet,
     Error,
@@ -16,12 +14,12 @@ use crate::{
 // Field
 
 pub trait Field {
-    fn try_read<P>(packet: &P, range: Option<RangeInclusive<usize>>) -> Result<Self, Error>
+    fn try_read<P>(packet: &P) -> Result<Self, Error>
     where
         Self: Sized,
         P: Packet;
 
-    fn write<P>(self, packet: P, range: Option<RangeInclusive<usize>>) -> P
+    fn write<P>(self, packet: P) -> P
     where
         P: Packet;
 }
@@ -29,11 +27,11 @@ pub trait Field {
 // Fields
 
 pub trait Fields {
-    fn try_get<F>(&self, range: Option<RangeInclusive<usize>>) -> Result<F, Error>
+    fn try_get<F>(&self) -> Result<F, Error>
     where
         F: Field;
 
-    fn set<F>(self, field: F, range: Option<RangeInclusive<usize>>) -> Self
+    fn set<F>(self, field: F) -> Self
     where
         F: Field;
 }
@@ -48,18 +46,18 @@ impl<P> Fields for P
 where
     P: Packet,
 {
-    fn try_get<V>(&self, range: Option<RangeInclusive<usize>>) -> Result<V, Error>
+    fn try_get<V>(&self) -> Result<V, Error>
     where
         V: Field,
     {
-        V::try_read(self, range)
+        V::try_read(self)
     }
 
-    fn set<V>(self, value: V, range: Option<RangeInclusive<usize>>) -> Self
+    fn set<V>(self, value: V) -> Self
     where
         V: Field,
     {
-        value.write(self, range)
+        value.write(self)
     }
 }
 
@@ -190,24 +188,22 @@ macro_rules! impl_field_trait_try_from_fns {
 macro_rules! impl_field_trait_field {
     ($field:ident, $integral:ty, $range:expr) => {
         impl Field for $field {
-            fn try_read<I>(packet: &I, range: Option<RangeInclusive<usize>>) -> Result<Self, Error>
+            fn try_read<I>(packet: &I) -> Result<Self, Error>
             where
                 I: Packet,
             {
-                let range = range.unwrap_or($range);
-                let integral = packet.get()[range].load_be::<$integral>();
+                let integral = packet.get()[$range].load_be::<$integral>();
 
                 Self::try_from(integral)
             }
 
-            fn write<I>(self, mut packet: I, range: Option<RangeInclusive<usize>>) -> I
+            fn write<I>(self, mut packet: I) -> I
             where
                 I: Packet,
             {
-                let range = range.unwrap_or($range);
                 let integral = <$integral>::from(self);
 
-                packet.get_mut()[range].store_be::<$integral>(integral);
+                packet.get_mut()[$range].store_be::<$integral>(integral);
                 packet
             }
         }

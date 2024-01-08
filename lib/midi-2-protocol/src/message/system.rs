@@ -15,8 +15,6 @@
 pub mod common;
 pub mod real_time;
 
-use std::ops::RangeInclusive;
-
 use bitvec::field::BitField;
 use num_enum::{
     IntoPrimitive,
@@ -88,7 +86,7 @@ macro_rules! impl_message {
     (
         $(#[$meta:meta])*
         $vis:vis $message:ident { $status:expr, [
-            $({ $value_name:ident, $value_type:ty $(, $value_range:expr)? },)*
+            $({ $name:ident, $type:ty },)*
         ] }
     ) => {
             message::impl_message!(
@@ -97,7 +95,7 @@ macro_rules! impl_message {
                     { message_type, MessageType },
                     { group, Group },
                     { status, Status },
-                  $({ $value_name, $value_type, $value_range },)*
+                  $({ $name, $type },)*
                 ] }
             );
 
