@@ -100,7 +100,7 @@ macro_rules! impl_message {
             );
 
             impl<'a> $message<'a> {
-                pub(super) const STATUS: Status = $status;
+                pub(crate) const STATUS: Status = $status;
 
                 fn try_init_internal(packet: &'a mut [u32]) -> Result<Self, Error> {
                     Ok(Self::try_new(packet)?
@@ -116,8 +116,13 @@ macro_rules! impl_message {
 macro_rules! impl_message_try_init {
     ($message:ident) => {
         impl<'a> $message<'a> {
-            pub fn try_init(packet: &'a mut [u32]) -> Result<Self, Error> {
-                Self::try_init_internal(packet)
+            ::paste::paste! {
+                #[doc = "TODO"]
+                #[doc = "# Errors"]
+                #[doc = "TODO"]
+                pub fn try_init(packet: &'a mut [u32]) -> Result<Self, Error> {
+                    Self::try_init_internal(packet)
+                }
             }
         }
     };

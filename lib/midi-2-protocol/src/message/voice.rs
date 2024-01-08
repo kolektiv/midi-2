@@ -80,13 +80,21 @@ field::impl_field!(pub Velocity { u16, 32..=47 });
 
 // Registered Per-Note Controller
 
-voice::impl_message!(pub RegisteredPerNoteController { Opcode::RegisteredPerNoteController, [
-    { note, Note },
-    { per_note_controller, PerNoteController },
-    { data, Data },
-] });
+voice::impl_message!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub RegisteredPerNoteController { Opcode::RegisteredPerNoteController, [
+        { note, Note },
+        { per_note_controller, PerNoteController },
+        { data, Data },
+    ] }
+);
 
 impl<'a> RegisteredPerNoteController<'a> {
+    /// TODO
+    /// # Errors
+    /// TODO
     pub fn try_init(
         packet: &'a mut [u32],
         note: Note,
@@ -100,13 +108,21 @@ impl<'a> RegisteredPerNoteController<'a> {
 
 // Assignable Per-Note Controller
 
-voice::impl_message!(pub AssignablePerNoteController { Opcode::AssignablePerNoteController, [
-    { note, Note },
-    { per_note_controller, PerNoteController },
-    { data, Data },
-] });
+voice::impl_message!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub AssignablePerNoteController { Opcode::AssignablePerNoteController, [
+        { note, Note },
+        { per_note_controller, PerNoteController },
+        { data, Data },
+    ] }
+);
 
 impl<'a> AssignablePerNoteController<'a> {
+    /// TODO
+    /// # Errors
+    /// TODO
     pub fn try_init(
         packet: &'a mut [u32],
         note: Note,
@@ -120,13 +136,21 @@ impl<'a> AssignablePerNoteController<'a> {
 
 // Registered Controller
 
-voice::impl_message!(pub RegisteredController { Opcode::RegisteredController, [
-    { bank, Bank },
-    { controller, Controller },
-    { data, Data },
-] });
+voice::impl_message!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub RegisteredController { Opcode::RegisteredController, [
+        { bank, Bank },
+        { controller, Controller },
+        { data, Data },
+    ] }
+);
 
 impl<'a> RegisteredController<'a> {
+    /// TODO
+    /// # Errors
+    /// TODO
     pub fn try_init(
         packet: &'a mut [u32],
         bank: Bank,
@@ -140,13 +164,21 @@ impl<'a> RegisteredController<'a> {
 
 // Assignable Controller
 
-voice::impl_message!(pub AssignableController { Opcode::AssignableController, [
-    { bank, Bank },
-    { controller, Controller },
-    { data, Data },
-] });
+voice::impl_message!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub AssignableController { Opcode::AssignableController, [
+        { bank, Bank },
+        { controller, Controller },
+        { data, Data },
+    ] }
+);
 
 impl<'a> AssignableController<'a> {
+    /// TODO
+    /// # Errors
+    /// TODO
     pub fn try_init(
         packet: &'a mut [u32],
         bank: Bank,
@@ -160,13 +192,21 @@ impl<'a> AssignableController<'a> {
 
 // Relative Registered Controller
 
-voice::impl_message!(pub RelativeRegisteredController { Opcode::RelativeRegisteredController, [
-    { bank, Bank },
-    { controller, Controller },
-    { data, Data },
-] });
+voice::impl_message!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub RelativeRegisteredController { Opcode::RelativeRegisteredController, [
+        { bank, Bank },
+        { controller, Controller },
+        { data, Data },
+    ] }
+);
 
 impl<'a> RelativeRegisteredController<'a> {
+    /// TODO
+    /// # Errors
+    /// TODO
     pub fn try_init(
         packet: &'a mut [u32],
         bank: Bank,
@@ -180,13 +220,21 @@ impl<'a> RelativeRegisteredController<'a> {
 
 // Relative Assignable Controller
 
-voice::impl_message!(pub RelativeAssignableController { Opcode::RelativeAssignableController, [
-    { bank, Bank },
-    { controller, Controller },
-    { data, Data },
-] });
+voice::impl_message!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub RelativeAssignableController { Opcode::RelativeAssignableController, [
+        { bank, Bank },
+        { controller, Controller },
+        { data, Data },
+    ] }
+);
 
 impl<'a> RelativeAssignableController<'a> {
+    /// TODO
+    /// # Errors
+    /// TODO
     pub fn try_init(
         packet: &'a mut [u32],
         bank: Bank,
@@ -200,12 +248,20 @@ impl<'a> RelativeAssignableController<'a> {
 
 // Per-Note Pitch Bend
 
-voice::impl_message!(pub PerNotePitchBend { Opcode::PerNotePitchBend, [
-    { note, Note },
-    { data, Data },
-] });
+voice::impl_message!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub PerNotePitchBend { Opcode::PerNotePitchBend, [
+        { note, Note },
+        { data, Data },
+    ] }
+);
 
 impl<'a> PerNotePitchBend<'a> {
+    /// TODO
+    /// # Errors
+    /// TODO
     pub fn try_init(packet: &'a mut [u32], note: Note) -> Result<Self, Error> {
         Ok(Self::try_init_internal(packet)?.set_note(note))
     }
@@ -213,12 +269,20 @@ impl<'a> PerNotePitchBend<'a> {
 
 // Note Off
 
-voice::impl_message!(pub NoteOff { Opcode::NoteOff, [
-    { note, Note },
-    { velocity, Velocity },
-] });
+voice::impl_message!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub NoteOff { Opcode::NoteOff, [
+        { note, Note },
+        { velocity, Velocity },
+    ] }
+);
 
 impl<'a> NoteOff<'a> {
+    /// TODO
+    /// # Errors
+    /// TODO
     pub fn try_init(packet: &'a mut [u32], note: Note, velocity: Velocity) -> Result<Self, Error> {
         Ok(Self::try_init_internal(packet)?
             .set_note(note)
@@ -228,12 +292,20 @@ impl<'a> NoteOff<'a> {
 
 // Note On
 
-voice::impl_message!(pub NoteOn { Opcode::NoteOn, [
-    { note, Note },
-    { velocity, Velocity },
-] });
+voice::impl_message!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub NoteOn { Opcode::NoteOn, [
+        { note, Note },
+        { velocity, Velocity },
+    ] }
+);
 
 impl<'a> NoteOn<'a> {
+    /// TODO
+    /// # Errors
+    /// TODO
     pub fn try_init(packet: &'a mut [u32], note: Note, velocity: Velocity) -> Result<Self, Error> {
         Ok(Self::try_init_internal(packet)?
             .set_note(note)
@@ -266,7 +338,7 @@ macro_rules! impl_message {
             );
 
             impl<'a> $message<'a> {
-                const OPCODE: Opcode = $opcode;
+                pub(crate) const OPCODE: Opcode = $opcode;
 
                 fn try_init_internal(packet: &'a mut [u32]) -> Result<Self, Error> {
                     Ok(Self::try_new(packet)?
