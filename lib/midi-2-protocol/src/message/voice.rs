@@ -2,6 +2,8 @@
 // Voice
 // =============================================================================
 
+//! TODO
+
 pub mod attribute;
 
 use arbitrary_int::UInt;
@@ -38,6 +40,9 @@ use crate::{
 
 // Opcode
 
+/// TODO
+/// # Examples
+/// TODO
 #[derive(Debug, Eq, IntoPrimitive, PartialEq, TryFromPrimitive)]
 #[num_enum(error_type(name = Error, constructor = Error::conversion))]
 #[repr(u8)]
@@ -63,16 +68,56 @@ field::impl_field_trait_field!(Opcode, u8, 8..=11);
 
 // Channel
 
-field::impl_field!(pub Channel { u8, 12..=15, 4 });
+field::impl_field!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub Channel { u8, 12..=15, 4 }
+);
 
 // Other
 
-field::impl_field!(pub Bank { u8, 16..=23, 7 });
-field::impl_field!(pub Controller { u8, 24..=31, 7 });
-field::impl_field!(pub Data {u32, 32..=63 });
-field::impl_field!(pub Note { u8, 16..=23, 7 });
-field::impl_field!(pub PerNoteController { u8, 24..=31 });
-field::impl_field!(pub Velocity { u16, 32..=47 });
+field::impl_field!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub Bank { u8, 16..=23, 7 }
+);
+
+field::impl_field!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub Controller { u8, 24..=31, 7 }
+);
+
+field::impl_field!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub Data {u32, 32..=63 }
+);
+
+field::impl_field!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub Note { u8, 16..=23, 7 }
+);
+
+field::impl_field!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub PerNoteController { u8, 24..=31 }
+);
+
+field::impl_field!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub Velocity { u16, 32..=47 }
+);
 
 // -----------------------------------------------------------------------------
 

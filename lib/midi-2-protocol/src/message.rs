@@ -160,6 +160,7 @@ macro_rules! impl_message {
         message::impl_message_struct!($($meta)*, $vis, $message);
         message::impl_message_constructor!($message, $size);
         message::impl_message_packet!($message, $size);
+        message::impl_message_reset!($message);
         message::impl_message_trait_bits!($message);
         message::impl_message_trait_debug!($message, $({ $name },)*);
         message::impl_message_fields!($message, $({ $name, $type },)*);
@@ -215,6 +216,17 @@ macro_rules! impl_message_packet {
     };
 }
 
+macro_rules! impl_message_reset {
+    ($message:ident) => {
+        impl<'a> $message<'a> {
+            pub(crate) fn reset(self) -> Self {
+                self.bits.fill(false);
+                self
+            }
+        }
+    };
+}
+
 macro_rules! impl_message_fields {
     ($message:ident, $({ $name:ident, $type:ty },)*) => {
         impl<'a> $message<'a> {
@@ -250,11 +262,6 @@ macro_rules! impl_message_trait_bits {
             fn get_mut(&mut self) -> &mut BitSlice<u32, Msb0> {
                 &mut self.bits
             }
-
-            fn reset(self) -> Self {
-                self.bits.fill(false);
-                self
-            }
         }
     };
 }
@@ -279,6 +286,7 @@ pub(crate) use impl_message;
 pub(crate) use impl_message_constructor;
 pub(crate) use impl_message_fields;
 pub(crate) use impl_message_packet;
+pub(crate) use impl_message_reset;
 pub(crate) use impl_message_struct;
 pub(crate) use impl_message_trait_bits;
 pub(crate) use impl_message_trait_debug;

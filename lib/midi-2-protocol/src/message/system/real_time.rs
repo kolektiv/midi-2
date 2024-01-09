@@ -9,7 +9,10 @@ use bitvec::{
 };
 
 use crate::{
-    field::Fields,
+    field::{
+        Field,
+        Fields,
+    },
     message::{
         self,
         system::{
@@ -218,3 +221,24 @@ system::impl_message!(
 );
 
 system::impl_message_try_init!(Reset);
+
+// -----------------------------------------------------------------------------
+
+// Enumeration
+
+#[derive(Debug)]
+pub enum RealTime<'a> {
+    TimingClock(TimingClock<'a>),
+    Start(Start<'a>),
+    Continue(Continue<'a>),
+    Stop(Stop<'a>),
+    ActiveSensing(ActiveSensing<'a>),
+    Reset(Reset<'a>),
+}
+
+// impl<'a> RealTime<'a> {
+//     pub fn try_new(packet: &'a mut [u32]) -> Result<Self, Error> {
+//         let bits = packet.view_bits_mut::<Msb0>();
+//         let status = bits.try_get::<Status>()?;
+//     }
+// }

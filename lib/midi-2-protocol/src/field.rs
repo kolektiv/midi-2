@@ -190,7 +190,7 @@ macro_rules! impl_field_trait_field {
         impl Field for $field {
             fn try_read<I>(packet: &I) -> Result<Self, Error>
             where
-                I: Packet,
+                I: Packet + ?Sized,
             {
                 let integral = packet.get()[$range].load_be::<$integral>();
 
