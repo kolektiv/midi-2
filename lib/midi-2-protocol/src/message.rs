@@ -158,9 +158,48 @@ field::impl_field!(
 
 // Enumeration
 
-/// TODO
+/// MIDI 2[.x] Protocol Message (UMP Format)
+///
+/// The `Message` enumeration allows pattern matching against all possible
+/// message types, given data theoretically comprising a Universal MIDI Packet
+/// (UMP). This match will return a reference to the specific MIDI 2[.x] message
+/// type, allowing read and write access to the message data.
+///
 /// # Examples
-/// TODO
+///
+/// The following example constructs a new
+/// [`NoteOff`](crate::message::voice::NoteOff) message, and then attempts to
+/// read the raw message data back via pattern matching.
+///
+/// ```rust
+/// # use midi_2_protocol::*;
+/// # use midi_2_protocol::message::*;
+/// # use midi_2_protocol::message::voice::*;
+/// #
+/// // packet begins as an empty message: [0x0, 0x0] (a [u32; 2]);
+/// let mut packet = NoteOff::packet();
+///
+/// // packet is set to a NoteOff message: [0x43854000, 0x7fe90000]
+/// NoteOff::try_init(&mut packet, Note::new(64), Velocity::new(32745))?
+///     .set_group(Group::new(3))
+///     .set_channel(Channel::new(5));
+///
+/// if let Message::Voice(Voice::NoteOff(note_off)) = Message::try_from(&mut packet[..])? {
+///     // the message has the expected message type and opcode
+///     assert_eq!(note_off.message_type()?, MessageType::Voice);
+///     assert_eq!(note_off.opcode()?, Opcode::NoteOff);
+///
+///     // the message also has the fields set as part of init, and set_ calls
+///     assert_eq!(note_off.note()?, Note::new(64));
+///     assert_eq!(note_off.velocity()?, Velocity::new(32745));
+///     assert_eq!(note_off.group()?, Group::new(3));
+///     assert_eq!(note_off.channel()?, Channel::new(5));
+/// } else {
+///     panic!("Oh No!")
+/// }
+/// #
+/// # Ok::<(), Error>(())
+/// ```
 #[derive(Debug)]
 pub enum Message<'a> {
     System(system::System<'a>),
