@@ -15,7 +15,12 @@
 pub mod common;
 pub mod real_time;
 
-use bitvec::field::BitField;
+use bitvec::{
+    field::BitField,
+    prelude::Msb0,
+    slice::BitSlice,
+    view::BitView,
+};
 use num_enum::{
     IntoPrimitive,
     TryFromPrimitive,
@@ -27,7 +32,11 @@ use crate::{
         TryReadFromPacket,
         WriteToPacket,
     },
-    packet::GetBitSlice,
+    message,
+    packet::{
+        GetBitSlice,
+        TryReadField,
+    },
     Error,
 };
 
@@ -76,6 +85,38 @@ pub enum Status {
 }
 
 field::impl_field_trait_field!(Status, u8, 8..=15);
+
+// -----------------------------------------------------------------------------
+
+// Enumeration
+
+/// TODO
+/// # Examples
+/// TODO
+#[derive(Debug)]
+pub enum System<'a> {
+    Common(common::Common<'a>),
+    RealTime(real_time::RealTime<'a>),
+}
+
+message::impl_enumeration_trait_try_from!(System);
+
+impl<'a> System<'a> {
+    pub(crate) fn try_new(bits: &'a mut BitSlice<u32, Msb0>) -> Result<Self, Error> {
+        match bits.try_read_field::<Status>()? {
+            Status::MIDITimeCode
+            | Status::SongPositionPointer
+            | Status::SongSelect
+            | Status::TuneRequest => Ok(Self::Common(common::Common::try_new(bits)?)),
+            Status::TimingClock
+            | Status::Start
+            | Status::Continue
+            | Status::Stop
+            | Status::ActiveSensing
+            | Status::Reset => Ok(Self::RealTime(real_time::RealTime::try_new(bits)?)),
+        }
+    }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -157,6 +198,8 @@ macro_rules! impl_message_try_init {
 }
 
 // -----------------------------------------------------------------------------
+
+// Macro Exports
 
 pub(crate) use impl_enumeration;
 pub(crate) use impl_message;

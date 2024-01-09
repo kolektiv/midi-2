@@ -157,7 +157,8 @@ macro_rules! impl_field_trait_field {
             where
                 P: GetBitSlice + ?Sized,
             {
-                let integral = packet.get()[$range].load_be::<$integral>();
+                let bit_slice = packet.get_bit_slice();
+                let integral = bit_slice[$range].load_be::<$integral>();
 
                 Self::try_from(integral)
             }
@@ -168,9 +169,10 @@ macro_rules! impl_field_trait_field {
             where
                 P: GetBitSlice,
             {
+                let bit_slice = packet.get_bit_slice_mut();
                 let integral = <$integral>::from(self);
 
-                packet.get_mut()[$range].store_be::<$integral>(integral);
+                bit_slice[$range].store_be::<$integral>(integral);
                 packet
             }
         }

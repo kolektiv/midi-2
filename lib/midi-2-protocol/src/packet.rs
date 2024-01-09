@@ -20,9 +20,9 @@ use crate::{
 // Traits
 
 pub trait GetBitSlice {
-    fn get(&self) -> &BitSlice<u32, Msb0>;
+    fn get_bit_slice(&self) -> &BitSlice<u32, Msb0>;
 
-    fn get_mut(&mut self) -> &mut BitSlice<u32, Msb0>;
+    fn get_bit_slice_mut(&mut self) -> &mut BitSlice<u32, Msb0>;
 }
 
 pub trait TryReadField {
@@ -42,11 +42,11 @@ pub trait WriteField {
 // Trait Implementations
 
 impl GetBitSlice for BitSlice<u32, Msb0> {
-    fn get(&self) -> &BitSlice<u32, Msb0> {
+    fn get_bit_slice(&self) -> &BitSlice<u32, Msb0> {
         self
     }
 
-    fn get_mut(&mut self) -> &mut BitSlice<u32, Msb0> {
+    fn get_bit_slice_mut(&mut self) -> &mut BitSlice<u32, Msb0> {
         self
     }
 }

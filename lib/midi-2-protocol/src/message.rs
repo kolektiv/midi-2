@@ -46,7 +46,12 @@ pub mod system;
 pub mod voice;
 
 use arbitrary_int::UInt;
-use bitvec::field::BitField;
+use bitvec::{
+    field::BitField,
+    order::Msb0,
+    slice::BitSlice,
+    view::BitView,
+};
 use num_enum::{
     IntoPrimitive,
     TryFromPrimitive,
@@ -58,7 +63,11 @@ use crate::{
         TryReadFromPacket,
         WriteToPacket,
     },
-    packet::GetBitSlice,
+    message,
+    packet::{
+        GetBitSlice,
+        TryReadField,
+    },
     Error,
 };
 
@@ -147,6 +156,31 @@ field::impl_field!(
 
 // -----------------------------------------------------------------------------
 
+// Enumeration
+
+/// TODO
+/// # Examples
+/// TODO
+#[derive(Debug)]
+pub enum Message<'a> {
+    System(system::System<'a>),
+    Voice(voice::Voice<'a>),
+}
+
+message::impl_enumeration_trait_try_from!(Message);
+
+impl<'a> Message<'a> {
+    pub(crate) fn try_new(bits: &'a mut BitSlice<u32, Msb0>) -> Result<Self, Error> {
+        match bits.try_read_field::<MessageType>()? {
+            MessageType::System => Ok(Self::System(system::System::try_new(bits)?)),
+            MessageType::Voice => Ok(Self::Voice(voice::Voice::try_new(bits)?)),
+            _ => unreachable!(),
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+
 // Macros
 
 // Enumeration
@@ -196,11 +230,13 @@ macro_rules! impl_message {
     ) => {
         message::impl_message_struct!($($meta)*, $vis, $message);
         message::impl_message_constructor!($message, $size);
+        message::impl_message_fields!($message, $({ $name, $type },)*);
         message::impl_message_packet!($message, $size);
         message::impl_message_reset!($message);
-        message::impl_message_trait_bits!($message);
         message::impl_message_trait_debug!($message, $({ $name },)*);
-        message::impl_message_fields!($message, $({ $name, $type },)*);
+        message::impl_message_trait_get_bit_slice!($message);
+        message::impl_message_trait_try_from!($message);
+
     };
 }
 
@@ -221,11 +257,6 @@ macro_rules! impl_message_constructor {
                     len if len == $size * 32 => Ok(Self { bits }),
                     len => Err(Error::size($size * 32, len.try_into().unwrap())),
                 }
-            }
-
-            // TODO: Trait!
-            pub(crate) fn try_from(packet: &'a mut [u32]) -> Result<Self, Error> {
-                Self::try_new(packet.view_bits_mut())
             }
         }
     };
@@ -292,20 +323,6 @@ macro_rules! impl_message_fields {
     };
 }
 
-macro_rules! impl_message_trait_bits {
-    ($message:ident) => {
-        impl<'a> GetBitSlice for $message<'a> {
-            fn get(&self) -> &BitSlice<u32, Msb0> {
-                &self.bits
-            }
-
-            fn get_mut(&mut self) -> &mut BitSlice<u32, Msb0> {
-                &mut self.bits
-            }
-        }
-    };
-}
-
 macro_rules! impl_message_trait_debug {
     ($message:ident, $({ $name:ident },)*) => {
         impl<'a> ::core::fmt::Debug for $message<'a> {
@@ -313,6 +330,32 @@ macro_rules! impl_message_trait_debug {
                 f.debug_struct(stringify!($message))
                   $(.field(stringify!($name), &self.$name().unwrap()))*
                     .finish()
+            }
+        }
+    };
+}
+
+macro_rules! impl_message_trait_get_bit_slice {
+    ($message:ident) => {
+        impl<'a> GetBitSlice for $message<'a> {
+            fn get_bit_slice(&self) -> &BitSlice<u32, Msb0> {
+                &self.bits
+            }
+
+            fn get_bit_slice_mut(&mut self) -> &mut BitSlice<u32, Msb0> {
+                &mut self.bits
+            }
+        }
+    };
+}
+
+macro_rules! impl_message_trait_try_from {
+    ($message:ident) => {
+        impl<'a> TryFrom<&'a mut [u32]> for $message<'a> {
+            type Error = Error;
+
+            fn try_from(value: &'a mut [u32]) -> Result<Self, Self::Error> {
+                Self::try_new(value.view_bits_mut::<Msb0>())
             }
         }
     };
@@ -331,5 +374,6 @@ pub(crate) use impl_message_fields;
 pub(crate) use impl_message_packet;
 pub(crate) use impl_message_reset;
 pub(crate) use impl_message_struct;
-pub(crate) use impl_message_trait_bits;
 pub(crate) use impl_message_trait_debug;
+pub(crate) use impl_message_trait_get_bit_slice;
+pub(crate) use impl_message_trait_try_from;
