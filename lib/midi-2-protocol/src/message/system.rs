@@ -24,9 +24,10 @@ use num_enum::{
 use crate::{
     field::{
         self,
-        Field,
+        TryReadFromPacket,
+        WriteToPacket,
     },
-    packet::Packet,
+    packet::GetBitSlice,
     Error,
 };
 
@@ -80,6 +81,33 @@ field::impl_field_trait_field!(Status, u8, 8..=15);
 
 // Macros
 
+// Enumeration
+
+macro_rules! impl_enumeration {
+    (
+        $(#[$meta:meta])*
+        $vis:vis $enum:ident, [
+            $($message:ident,)*
+        ]
+    ) => {
+        message::impl_enumeration!(
+            $(#[$meta])*
+            $vis $enum, [
+                $($message,)*
+            ]
+        );
+
+        impl<'a> $enum<'a> {
+            pub(crate) fn try_new(bits: &'a mut BitSlice<u32, Msb0>) -> Result<Self, Error> {
+                match bits.try_read_field::<Status>()? {
+                    $(Status::$message => Ok(Self::$message($message::try_new(bits)?)),)*
+                    _ => unreachable!(),
+                }
+            }
+        }
+    };
+}
+
 // Message
 
 macro_rules! impl_message {
@@ -103,7 +131,7 @@ macro_rules! impl_message {
                 pub(crate) const STATUS: Status = $status;
 
                 fn try_init_internal(packet: &'a mut [u32]) -> Result<Self, Error> {
-                    Ok(Self::try_new(packet)?
+                    Ok(Self::try_from(packet)?
                         .reset()
                         .set_message_type(MessageType::System)
                         .set_group(Group::default())
@@ -128,5 +156,8 @@ macro_rules! impl_message_try_init {
     };
 }
 
+// -----------------------------------------------------------------------------
+
+pub(crate) use impl_enumeration;
 pub(crate) use impl_message;
 pub(crate) use impl_message_try_init;

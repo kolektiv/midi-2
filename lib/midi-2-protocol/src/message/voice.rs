@@ -21,8 +21,8 @@ use num_enum::{
 use crate::{
     field::{
         self,
-        Field,
-        Fields,
+        TryReadFromPacket,
+        WriteToPacket,
     },
     message::{
         self,
@@ -30,7 +30,11 @@ use crate::{
         Group,
         MessageType,
     },
-    packet::Packet,
+    packet::{
+        GetBitSlice,
+        TryReadField,
+        WriteField,
+    },
     Error,
 };
 
@@ -360,7 +364,61 @@ impl<'a> NoteOn<'a> {
 
 // -----------------------------------------------------------------------------
 
+// Enumeration
+
+voice::impl_enumeration!(
+    /// TODO
+    /// # Example
+    /// TODO
+    pub Voice, [
+        RegisteredPerNoteController,
+        AssignablePerNoteController,
+        RegisteredController,
+        AssignableController,
+        RelativeRegisteredController,
+        RelativeAssignableController,
+        PerNotePitchBend,
+        NoteOff,
+        NoteOn,
+        // PolyPressure,
+        // ControlChange,
+        // ProgramChange,
+        // ChannelPressure,
+        // PitchBend,
+        // PerNoteManagement,
+    ]
+);
+
+// -----------------------------------------------------------------------------
+
 // Macros
+
+// Enumeration
+
+macro_rules! impl_enumeration {
+    (
+        $(#[$meta:meta])*
+        $vis:vis $enum:ident, [
+            $($message:ident,)*
+        ]
+    ) => {
+        message::impl_enumeration!(
+            $(#[$meta])*
+            $vis $enum, [
+                $($message,)*
+            ]
+        );
+
+        impl<'a> $enum<'a> {
+            pub(crate) fn try_new(bits: &'a mut BitSlice<u32, Msb0>) -> Result<Self, Error> {
+                match bits.try_read_field::<Opcode>()? {
+                    $(Opcode::$message => Ok(Self::$message($message::try_new(bits)?)),)*
+                    _ => unreachable!()
+                }
+            }
+        }
+    };
+}
 
 // Message
 
@@ -386,7 +444,7 @@ macro_rules! impl_message {
                 pub(crate) const OPCODE: Opcode = $opcode;
 
                 fn try_init_internal(packet: &'a mut [u32]) -> Result<Self, Error> {
-                    Ok(Self::try_new(packet)?
+                    Ok(Self::try_from(packet)?
                         .reset()
                         .set_message_type(MessageType::Voice)
                         .set_group(Group::default())
@@ -397,4 +455,5 @@ macro_rules! impl_message {
     };
 }
 
-use impl_message;
+pub(crate) use impl_enumeration;
+pub(crate) use impl_message;

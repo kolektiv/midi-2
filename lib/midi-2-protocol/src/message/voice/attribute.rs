@@ -9,9 +9,10 @@ use bitvec::field::BitField;
 use crate::{
     field::{
         self,
-        Field,
+        TryReadFromPacket,
+        WriteToPacket,
     },
-    packet::Packet,
+    packet::GetBitSlice,
     Error,
 };
 

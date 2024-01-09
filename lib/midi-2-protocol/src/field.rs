@@ -3,7 +3,7 @@
 // =============================================================================
 
 use crate::{
-    packet::Packet,
+    packet::GetBitSlice,
     Error,
 };
 
@@ -13,52 +13,17 @@ use crate::{
 
 // Field
 
-pub trait Field {
-    fn try_read<P>(packet: &P) -> Result<Self, Error>
+pub trait TryReadFromPacket {
+    fn try_read_from_packet<P>(packet: &P) -> Result<Self, Error>
     where
         Self: Sized,
-        P: Packet;
-
-    fn write<P>(self, packet: P) -> P
-    where
-        P: Packet;
+        P: GetBitSlice + ?Sized;
 }
 
-// Fields
-
-pub trait Fields {
-    fn try_get<F>(&self) -> Result<F, Error>
+pub trait WriteToPacket {
+    fn write_to_packet<P>(self, packet: P) -> P
     where
-        F: Field;
-
-    fn set<F>(self, field: F) -> Self
-    where
-        F: Field;
-}
-
-// -----------------------------------------------------------------------------
-
-// Trait Implementations
-
-// Fields
-
-impl<P> Fields for P
-where
-    P: Packet,
-{
-    fn try_get<V>(&self) -> Result<V, Error>
-    where
-        V: Field,
-    {
-        V::try_read(self)
-    }
-
-    fn set<V>(self, value: V) -> Self
-    where
-        V: Field,
-    {
-        value.write(self)
-    }
+        P: GetBitSlice;
 }
 
 // -----------------------------------------------------------------------------
@@ -187,19 +152,21 @@ macro_rules! impl_field_trait_try_from_fns {
 
 macro_rules! impl_field_trait_field {
     ($field:ident, $integral:ty, $range:expr) => {
-        impl Field for $field {
-            fn try_read<I>(packet: &I) -> Result<Self, Error>
+        impl TryReadFromPacket for $field {
+            fn try_read_from_packet<P>(packet: &P) -> Result<Self, Error>
             where
-                I: Packet + ?Sized,
+                P: GetBitSlice + ?Sized,
             {
                 let integral = packet.get()[$range].load_be::<$integral>();
 
                 Self::try_from(integral)
             }
+        }
 
-            fn write<I>(self, mut packet: I) -> I
+        impl WriteToPacket for $field {
+            fn write_to_packet<P>(self, mut packet: P) -> P
             where
-                I: Packet,
+                P: GetBitSlice,
             {
                 let integral = <$integral>::from(self);
 

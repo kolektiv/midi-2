@@ -55,9 +55,10 @@ use num_enum::{
 use crate::{
     field::{
         self,
-        Field,
+        TryReadFromPacket,
+        WriteToPacket,
     },
-    packet::Packet,
+    packet::GetBitSlice,
     Error,
 };
 
@@ -148,6 +149,42 @@ field::impl_field!(
 
 // Macros
 
+// Enumeration
+
+macro_rules! impl_enumeration {
+    (
+        $(#[$meta:meta])*
+        $vis:vis $enum:ident, [
+            $($message:ident,)*
+            ]
+    ) => {
+        message::impl_enumeration_struct!($($meta)*, $vis, $enum, $($message,)*);
+        message::impl_enumeration_trait_try_from!($enum);
+    };
+}
+
+macro_rules! impl_enumeration_struct {
+    ($($meta:meta)*, $vis:vis, $enum:ident, $($message:ident,)*) => {
+        $(#[$meta])*
+        #[derive(Debug)]
+        $vis enum $enum<'a> {
+            $($message($message<'a>)),*
+        }
+    };
+}
+
+macro_rules! impl_enumeration_trait_try_from {
+    ($enum:ident) => {
+        impl<'a> TryFrom<&'a mut [u32]> for $enum<'a> {
+            type Error = Error;
+
+            fn try_from(value: &'a mut [u32]) -> Result<Self, Self::Error> {
+                Self::try_new(value.view_bits_mut::<Msb0>())
+            }
+        }
+    };
+}
+
 // Message
 
 macro_rules! impl_message {
@@ -179,13 +216,16 @@ macro_rules! impl_message_struct {
 macro_rules! impl_message_constructor {
     ($message:ident, $size:literal) => {
         impl<'a> $message<'a> {
-            pub(crate) fn try_new(packet: &'a mut [u32]) -> Result<Self, Error> {
-                let bits = packet.view_bits_mut();
-
+            pub(crate) fn try_new(bits: &'a mut BitSlice<u32, Msb0>) -> Result<Self, Error> {
                 match bits.len() {
                     len if len == $size * 32 => Ok(Self { bits }),
                     len => Err(Error::size($size * 32, len.try_into().unwrap())),
                 }
+            }
+
+            // TODO: Trait!
+            pub(crate) fn try_from(packet: &'a mut [u32]) -> Result<Self, Error> {
+                Self::try_new(packet.view_bits_mut())
             }
         }
     };
@@ -239,12 +279,12 @@ macro_rules! impl_message_fields {
                     #[doc = "converted to the field type (not all field types are total across the range of"]
                     #[doc = "possible values)."]
                     pub fn $name(&self) -> Result<$type, Error> {
-                        self.try_get::<$type>()
+                        self.try_read_field::<$type>()
                     }
 
                     #[must_use]
                     pub fn [<set_ $name>](self, $name: $type) -> Self {
-                        self.set::<$type>($name)
+                        self.write_field::<$type>($name)
                     }
                 }
             )*
@@ -254,7 +294,7 @@ macro_rules! impl_message_fields {
 
 macro_rules! impl_message_trait_bits {
     ($message:ident) => {
-        impl<'a> Packet for $message<'a> {
+        impl<'a> GetBitSlice for $message<'a> {
             fn get(&self) -> &BitSlice<u32, Msb0> {
                 &self.bits
             }
@@ -282,6 +322,9 @@ macro_rules! impl_message_trait_debug {
 
 // Macro Exports
 
+pub(crate) use impl_enumeration;
+pub(crate) use impl_enumeration_struct;
+pub(crate) use impl_enumeration_trait_try_from;
 pub(crate) use impl_message;
 pub(crate) use impl_message_constructor;
 pub(crate) use impl_message_fields;

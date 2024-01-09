@@ -2,6 +2,8 @@
 // System Real Time
 // =============================================================================
 
+//! TODO
+
 use bitvec::{
     order::Msb0,
     slice::BitSlice,
@@ -9,10 +11,6 @@ use bitvec::{
 };
 
 use crate::{
-    field::{
-        Field,
-        Fields,
-    },
     message::{
         self,
         system::{
@@ -22,7 +20,11 @@ use crate::{
         Group,
         MessageType,
     },
-    packet::Packet,
+    packet::{
+        GetBitSlice,
+        TryReadField,
+        WriteField,
+    },
     Error,
 };
 
@@ -226,19 +228,16 @@ system::impl_message_try_init!(Reset);
 
 // Enumeration
 
-#[derive(Debug)]
-pub enum RealTime<'a> {
-    TimingClock(TimingClock<'a>),
-    Start(Start<'a>),
-    Continue(Continue<'a>),
-    Stop(Stop<'a>),
-    ActiveSensing(ActiveSensing<'a>),
-    Reset(Reset<'a>),
-}
-
-// impl<'a> RealTime<'a> {
-//     pub fn try_new(packet: &'a mut [u32]) -> Result<Self, Error> {
-//         let bits = packet.view_bits_mut::<Msb0>();
-//         let status = bits.try_get::<Status>()?;
-//     }
-// }
+system::impl_enumeration!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub RealTime, [
+        TimingClock,
+        Start,
+        Continue,
+        Stop,
+        ActiveSensing,
+        Reset,
+    ]
+);
