@@ -4,8 +4,6 @@
 
 //! TODO
 
-pub mod attribute;
-
 use arbitrary_int::UInt;
 use bitvec::{
     field::BitField,
@@ -68,7 +66,96 @@ pub enum Opcode {
     PerNoteManagement = 0xf,
 }
 
-field::impl_field_trait_field!(Opcode, u8, 8..=11);
+field::impl_field_trait_field_traits!(Opcode, u8, 8..=11);
+
+// Attribute
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum Attribute {
+    None,
+    Manufacturer(Manufacturer),
+    Profile(Profile),
+    Pitch(Pitch, Fractional),
+}
+
+impl TryReadFromPacket for Attribute {
+    fn try_read_from_packet<P>(packet: &P) -> Result<Self, Error>
+    where
+        Self: Sized,
+        P: GetBitSlice + ?Sized,
+    {
+        match packet.try_read_field::<AttributeType>()? {
+            AttributeType::None => Ok(Attribute::None),
+            AttributeType::Manufacturer => Ok(Attribute::Manufacturer(packet.try_read_field()?)),
+            AttributeType::Profile => Ok(Attribute::Profile(packet.try_read_field()?)),
+            AttributeType::Pitch => Ok(Attribute::Pitch(
+                packet.try_read_field()?,
+                packet.try_read_field()?,
+            )),
+        }
+    }
+}
+
+impl WriteToPacket for Attribute {
+    fn write_to_packet<P>(self, packet: P) -> P
+    where
+        P: GetBitSlice,
+    {
+        match self {
+            Self::None => packet.write_field(AttributeType::None),
+            Self::Manufacturer(manufacturer) => packet
+                .write_field(AttributeType::Manufacturer)
+                .write_field(manufacturer),
+            Self::Profile(profile) => packet
+                .write_field(AttributeType::Profile)
+                .write_field(profile),
+            Self::Pitch(pitch, fractional) => packet
+                .write_field(AttributeType::Pitch)
+                .write_field(pitch)
+                .write_field(fractional),
+        }
+    }
+}
+
+#[derive(Debug, Eq, IntoPrimitive, PartialEq, TryFromPrimitive)]
+#[num_enum(error_type(name = Error, constructor = Error::conversion))]
+#[repr(u8)]
+pub(crate) enum AttributeType {
+    None = 0x0,
+    Manufacturer = 0x1,
+    Profile = 0x2,
+    Pitch = 0x3,
+}
+
+field::impl_field_trait_field_traits!(AttributeType, u8, 24..=31);
+
+field::impl_field!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub Manufacturer { u16, 48..=63 }
+);
+
+field::impl_field!(
+    /// TODO
+    /// # Example
+    /// TODO
+    pub Profile { u16, 48..=63 }
+);
+
+field::impl_field!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub Pitch { u8, 48..=54, 7 }
+);
+
+field::impl_field!(
+    /// TODO
+    /// # Examples
+    /// TODO
+    pub Fractional { u16, 55..=63, 9 }
+);
 
 // Channel
 
@@ -325,6 +412,7 @@ voice::impl_message!(
     pub NoteOff { Opcode::NoteOff, [
         { note, Note },
         { velocity, Velocity },
+        { attribute, Attribute },
     ] }
 );
 
@@ -348,6 +436,7 @@ voice::impl_message!(
     pub NoteOn { Opcode::NoteOn, [
         { note, Note },
         { velocity, Velocity },
+        { attribute, Attribute },
     ] }
 );
 

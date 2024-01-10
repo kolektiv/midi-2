@@ -41,7 +41,7 @@ macro_rules! impl_field {
         field::impl_field_constructor!($field, $integral $(, $size)?);
         field::impl_field_trait_from!($field, $integral $(, $size)?);
         field::impl_field_trait_try_from!($field, $integral $(, $size)?);
-        field::impl_field_trait_field!($field, $integral, $range);
+        field::impl_field_trait_field_traits!($field, $integral, $range);
     };
 }
 
@@ -148,9 +148,16 @@ macro_rules! impl_field_trait_try_from_fns {
     };
 }
 
-// Field Trait - Field
+// Field Trait - Try
 
-macro_rules! impl_field_trait_field {
+macro_rules! impl_field_trait_field_traits {
+    ($field:ident, $integral:ty, $range:expr) => {
+        crate::field::impl_field_trait_try_read_from_packet!($field, $integral, $range);
+        crate::field::impl_field_trait_write_to_packet!($field, $integral, $range);
+    };
+}
+
+macro_rules! impl_field_trait_try_read_from_packet {
     ($field:ident, $integral:ty, $range:expr) => {
         impl TryReadFromPacket for $field {
             fn try_read_from_packet<P>(packet: &P) -> Result<Self, Error>
@@ -163,7 +170,11 @@ macro_rules! impl_field_trait_field {
                 Self::try_from(integral)
             }
         }
+    };
+}
 
+macro_rules! impl_field_trait_write_to_packet {
+    ($field:ident, $integral:ty, $range:expr) => {
         impl WriteToPacket for $field {
             fn write_to_packet<P>(self, mut packet: P) -> P
             where
@@ -187,8 +198,10 @@ pub(crate) use impl_field;
 pub(crate) use impl_field_constructor;
 pub(crate) use impl_field_constructor_fns;
 pub(crate) use impl_field_struct;
-pub(crate) use impl_field_trait_field;
+pub(crate) use impl_field_trait_field_traits;
 pub(crate) use impl_field_trait_from;
 pub(crate) use impl_field_trait_from_fns;
 pub(crate) use impl_field_trait_try_from;
 pub(crate) use impl_field_trait_try_from_fns;
+pub(crate) use impl_field_trait_try_read_from_packet;
+pub(crate) use impl_field_trait_write_to_packet;

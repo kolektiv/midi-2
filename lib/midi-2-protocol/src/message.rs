@@ -45,7 +45,6 @@
 pub mod system;
 pub mod voice;
 
-use arbitrary_int::UInt;
 use bitvec::{
     field::BitField,
     order::Msb0,
@@ -119,40 +118,61 @@ pub enum MessageType {
     Stream = 0xf,
 }
 
-field::impl_field_trait_field!(MessageType, u8, 0..=3);
+field::impl_field_trait_field_traits!(MessageType, u8, 0..=3);
 
 // Group
 
-field::impl_field!(
-    /// Group field type.
-    ///
-    /// The `Group` field type accesses the 4-bit Group field present in most UMP
-    /// messages (exluding Utility and Stream messages) **([M2-104-UM 2.1.2])**.
-    /// Messages which contain a Group field provide `group(...)` and
-    /// `set_group(...)` functions to read and write the Group value.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use midi_2_protocol::*;
-    /// # use midi_2_protocol::message::*;
-    /// # use midi_2_protocol::message::system::real_time::*;
-    /// #
-    /// let mut packet = TimingClock::packet();
-    /// let mut message = TimingClock::try_init(&mut packet)?;
-    ///
-    /// assert_eq!(message.group()?, Group::new(0x0));
-    /// // packet is [0x10f80000]...
-    ///
-    /// let mut message = message.set_group(Group::new(0x3));
-    ///
-    /// assert_eq!(message.group()?, Group::new(0x3));
-    /// // packet is now [0x13f80000]...
-    /// #
-    /// # Ok::<(), Error>(())
-    /// ```
-    pub Group { u8, 4..=7, 4 }
-);
+/// Group field type.
+///
+/// The `Group` field type accesses the 4-bit Group field present in most UMP
+/// messages (exluding Utility and Stream messages) **([M2-104-UM 2.1.2])**.
+/// Messages which contain a Group field provide `group(...)` and
+/// `set_group(...)` functions to read and write the Group value.
+///
+/// # Examples
+///
+/// ```rust
+/// # use midi_2_protocol::*;
+/// # use midi_2_protocol::message::*;
+/// # use midi_2_protocol::message::system::real_time::*;
+/// #
+/// let mut packet = TimingClock::packet();
+/// let mut message = TimingClock::try_init(&mut packet)?;
+///
+/// // packet is [0x10f80000]...
+/// assert_eq!(message.group()?, Group::G1);
+///
+/// let mut message = message.set_group(Group::G4);
+///
+/// // packet is now [0x13f80000]...
+/// assert_eq!(message.group()?, Group::G4);
+/// #
+/// # Ok::<(), Error>(())
+/// ```
+#[derive(Debug, Default, Eq, IntoPrimitive, PartialEq, TryFromPrimitive)]
+#[num_enum(error_type(name = Error, constructor = Error::conversion))]
+#[repr(u8)]
+pub enum Group {
+    #[default]
+    G1 = 0x0,
+    G2 = 0x1,
+    G3 = 0x2,
+    G4 = 0x3,
+    G5 = 0x4,
+    G6 = 0x5,
+    G7 = 0x6,
+    G8 = 0x7,
+    G9 = 0x8,
+    G10 = 0x9,
+    G11 = 0xa,
+    G12 = 0xb,
+    G13 = 0xc,
+    G14 = 0xd,
+    G15 = 0xe,
+    G16 = 0xf,
+}
+
+field::impl_field_trait_field_traits!(Group, u8, 4..=7);
 
 // -----------------------------------------------------------------------------
 
@@ -181,19 +201,26 @@ field::impl_field!(
 ///
 /// // packet is set to a NoteOff message: [0x43854000, 0x7fe90000]
 /// NoteOff::try_init(&mut packet, Note::new(64), Velocity::new(32745))?
-///     .set_group(Group::new(3))
-///     .set_channel(Channel::new(5));
+///     .set_group(Group::G4)
+///     .set_channel(Channel::new(5))
+///     .set_attribute(Attribute::Manufacturer(Manufacturer::new(4353)));
 ///
 /// if let Message::Voice(Voice::NoteOff(note_off)) = Message::try_from(&mut packet[..])? {
 ///     // the message has the expected message type and opcode
 ///     assert_eq!(note_off.message_type()?, MessageType::Voice);
 ///     assert_eq!(note_off.opcode()?, Opcode::NoteOff);
 ///
-///     // the message also has the fields set as part of init, and set_ calls
+///     // the message also has the fields set as part of init
 ///     assert_eq!(note_off.note()?, Note::new(64));
 ///     assert_eq!(note_off.velocity()?, Velocity::new(32745));
-///     assert_eq!(note_off.group()?, Group::new(3));
+///
+///     // ...and the fields set via builder-style calls
+///     assert_eq!(note_off.group()?, Group::G4);
 ///     assert_eq!(note_off.channel()?, Channel::new(5));
+///     assert_eq!(
+///         note_off.attribute()?,
+///         Attribute::Manufacturer(Manufacturer::new(4353))
+///     );
 /// } else {
 ///     panic!("Oh No!")
 /// }

@@ -52,7 +52,7 @@ system::impl_message!(
     /// let mut message = TimingClock::try_init(&mut packet)?;
     ///
     /// assert_eq!(message.message_type()?, MessageType::System);
-    /// assert_eq!(message.group()?, Group::new(0x0));
+    /// assert_eq!(message.group()?, Group::G1);
     /// assert_eq!(message.status()?, Status::TimingClock);
     ///
     /// assert_eq!(packet, [0x10f80000]);
@@ -84,7 +84,7 @@ system::impl_message!(
     /// let mut message = Start::try_init(&mut packet)?;
     ///
     /// assert_eq!(message.message_type()?, MessageType::System);
-    /// assert_eq!(message.group()?, Group::new(0x0));
+    /// assert_eq!(message.group()?, Group::G1);
     /// assert_eq!(message.status()?, Status::Start);
     ///
     /// assert_eq!(packet, [0x10fa0000]);
@@ -116,7 +116,7 @@ system::impl_message!(
     /// let mut message = Continue::try_init(&mut packet)?;
     ///
     /// assert_eq!(message.message_type()?, MessageType::System);
-    /// assert_eq!(message.group()?, Group::new(0x0));
+    /// assert_eq!(message.group()?, Group::G1);
     /// assert_eq!(message.status()?, Status::Continue);
     ///
     /// assert_eq!(packet, [0x10fb0000]);
@@ -148,7 +148,7 @@ system::impl_message!(
     /// let mut message = Stop::try_init(&mut packet)?;
     ///
     /// assert_eq!(message.message_type()?, MessageType::System);
-    /// assert_eq!(message.group()?, Group::new(0x0));
+    /// assert_eq!(message.group()?, Group::G1);
     /// assert_eq!(message.status()?, Status::Stop);
     ///
     /// assert_eq!(packet, [0x10fc0000]);
@@ -180,7 +180,7 @@ system::impl_message!(
     /// let mut message = ActiveSensing::try_init(&mut packet)?;
     ///
     /// assert_eq!(message.message_type()?, MessageType::System);
-    /// assert_eq!(message.group()?, Group::new(0x0));
+    /// assert_eq!(message.group()?, Group::G1);
     /// assert_eq!(message.status()?, Status::ActiveSensing);
     ///
     /// assert_eq!(packet, [0x10fe0000]);
@@ -212,7 +212,7 @@ system::impl_message!(
     /// let mut message = Reset::try_init(&mut packet)?;
     ///
     /// assert_eq!(message.message_type()?, MessageType::System);
-    /// assert_eq!(message.group()?, Group::new(0x0));
+    /// assert_eq!(message.group()?, Group::G1);
     /// assert_eq!(message.status()?, Status::Reset);
     ///
     /// assert_eq!(packet, [0x10ff0000]);

@@ -88,7 +88,7 @@ pub enum Type {
     Hours(Significance),
 }
 
-field::impl_field_trait_field!(Type, u8, 17..=19);
+field::impl_field_trait_field_traits!(Type, u8, 17..=19);
 
 impl From<Type> for u8 {
     fn from(value: Type) -> Self {

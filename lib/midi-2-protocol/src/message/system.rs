@@ -84,7 +84,7 @@ pub enum Status {
     Reset = 0xff,
 }
 
-field::impl_field_trait_field!(Status, u8, 8..=15);
+field::impl_field_trait_field_traits!(Status, u8, 8..=15);
 
 // -----------------------------------------------------------------------------
 
