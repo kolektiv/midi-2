@@ -159,12 +159,33 @@ field::impl_field!(
 
 // Channel
 
-field::impl_field!(
-    /// TODO
-    /// # Examples
-    /// TODO
-    pub Channel { u8, 12..=15, 4 }
-);
+/// TODO
+/// # Examples
+/// TODO
+#[derive(Debug, Default, Eq, IntoPrimitive, PartialEq, TryFromPrimitive)]
+#[num_enum(error_type(name = Error, constructor = Error::conversion))]
+#[repr(u8)]
+pub enum Channel {
+    #[default]
+    C1 = 0x0,
+    C2 = 0x1,
+    C3 = 0x2,
+    C4 = 0x3,
+    C5 = 0x4,
+    C6 = 0x5,
+    C7 = 0x6,
+    C8 = 0x7,
+    C9 = 0x8,
+    C10 = 0x9,
+    C11 = 0xa,
+    C12 = 0xb,
+    C13 = 0xc,
+    C14 = 0xd,
+    C15 = 0xe,
+    C16 = 0xf,
+}
+
+field::impl_field_trait_field_traits!(Channel, u8, 12..=15);
 
 // Other
 

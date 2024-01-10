@@ -202,7 +202,7 @@ field::impl_field_trait_field_traits!(Group, u8, 4..=7);
 /// // packet is set to a NoteOff message: [0x43854000, 0x7fe90000]
 /// NoteOff::try_init(&mut packet, Note::new(64), Velocity::new(32745))?
 ///     .set_group(Group::G4)
-///     .set_channel(Channel::new(5))
+///     .set_channel(Channel::C6)
 ///     .set_attribute(Attribute::Manufacturer(Manufacturer::new(4353)));
 ///
 /// if let Message::Voice(Voice::NoteOff(note_off)) = Message::try_from(&mut packet[..])? {
@@ -216,7 +216,7 @@ field::impl_field_trait_field_traits!(Group, u8, 4..=7);
 ///
 ///     // ...and the fields set via builder-style calls
 ///     assert_eq!(note_off.group()?, Group::G4);
-///     assert_eq!(note_off.channel()?, Channel::new(5));
+///     assert_eq!(note_off.channel()?, Channel::C6);
 ///     assert_eq!(
 ///         note_off.attribute()?,
 ///         Attribute::Manufacturer(Manufacturer::new(4353))
