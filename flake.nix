@@ -19,7 +19,6 @@
     flake-utils,
     nixpkgs,
     rust-overlay,
-    self,
     ...
   }:
     flake-utils.lib.eachDefaultSystem (
